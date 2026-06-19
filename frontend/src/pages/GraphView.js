@@ -41,6 +41,9 @@ const GraphView = () => {
     return (
         <div style={{ width: '100%', border: '1px solid #ccc', backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxSizing: 'border-box' }}>
             <h2 style={{ margin: '0 0 20px 0' }}>Dependency Knowledge Graph</h2>
+            <div style={{ marginBottom: '10px', fontSize: '12px', color: '#666' }}>
+                <strong>Debug Info:</strong> Loaded {elements.length} graph elements from API/Mock.
+            </div>
             <div style={{ height: '600px', width: '100%', minHeight: '600px', position: 'relative', display: 'block' }}>
                 {elements.length > 0 ? (
                     <ReactFlow elements={elements} style={{ width: '100%', height: '600px', minHeight: '600px' }}>
