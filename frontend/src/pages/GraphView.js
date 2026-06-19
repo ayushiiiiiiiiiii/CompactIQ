@@ -46,7 +46,7 @@ const GraphView = () => {
             </div>
             <div style={{ height: '600px', width: '100%', minHeight: '600px', position: 'relative', display: 'block' }}>
                 {elements.length > 0 ? (
-                    <ReactFlow elements={elements} style={{ width: '100%', height: '600px', minHeight: '600px' }}>
+                    <ReactFlow elements={elements} style={{ width: '900px', height: '600px' }}>
                         <Background color="#aaa" gap={16} />
                         <Controls />
                     </ReactFlow>
