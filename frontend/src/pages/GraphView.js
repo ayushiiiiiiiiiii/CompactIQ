@@ -20,7 +20,8 @@ const GraphView = () => {
     useEffect(() => {
         const fetchGraph = async () => {
             try {
-                const data = await getGraphElements();
+                const deviceId = localStorage.getItem('scannedDeviceId');
+                const data = await getGraphElements(deviceId);
                 let graphElements = [];
                 if (data && data.elements && data.elements.length > 0) {
                     graphElements = data.elements;

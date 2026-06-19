@@ -77,11 +77,13 @@ async def submit_inventory(request: InventoryRequest, db: AsyncSession = Depends
     return response
 
 @router.get("/graph/elements")
-async def get_graph_elements(db: AsyncSession = Depends(get_db)):
-    # Get the latest scanned device
-    device_result = await db.execute(select(Device).options(selectinload(Device.components)).order_by(Device.last_scanned.desc()))
-    device = device_result.scalars().first()
-    device_id = device.id if device else "Unknown Device"
+async def get_graph_elements(device_id: str = None, db: AsyncSession = Depends(get_db)):
+    if device_id:
+        device_result = await db.execute(select(Device).where(Device.id == device_id))
+        device = device_result.scalars().first()
+        label_id = device.id if device else "Unknown Device"
+    else:
+        label_id = "Unscanned Device"
 
     rules_result = await db.execute(select(Rule))
     rules = rules_result.scalars().all()
@@ -89,11 +91,11 @@ async def get_graph_elements(db: AsyncSession = Depends(get_db)):
     
     elements = []
     
-    # Central "Endpoint" node at the top with actual device name
+    # Central "Endpoint" node at the top
     elements.append({
         "id": "endpoint-device",
         "type": "input",
-        "data": { "label": f"Endpoint ({device_id})" },
+        "data": { "label": f"Endpoint ({label_id})" },
         "position": { "x": 400, "y": 50 },
         "style": { "background": "#0076CE", "color": "#fff" }
     })

@@ -20,6 +20,7 @@ const Dashboard = () => {
                 const inventory = await window.electron.scanSystem();
                 const deviceId = inventory.os.hostname || "UNKNOWN-DEVICE";
                 const result = await submitInventory(deviceId, inventory.os, inventory.components);
+                localStorage.setItem('scannedDeviceId', deviceId);
                 setCompliance(result);
             } else {
                 // Web Browser: try to fetch the saved real system configuration from the database
