@@ -47,7 +47,8 @@ ipcMain.handle('scan-system', async () => {
         os: { name: "Windows 11", version: "10.0.22621" },
         components: [
           { type: "BIOS", vendor: "Dell", version: "1.14.3" },
-          { type: "SecurityAgent", vendor: "CrowdStrike", version: "7.17" }
+          { type: "SecurityAgent", vendor: "CrowdStrike", version: "7.17" },
+          { type: "Intel_NIC", vendor: "Intel", version: "22.0" }
         ]
       });
     }, 1500);
