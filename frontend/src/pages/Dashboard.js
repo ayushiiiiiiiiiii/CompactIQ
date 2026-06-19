@@ -6,17 +6,8 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const fetchInitialCompliance = async () => {
-            try {
-                const result = await getCompliance("DEVICE-XYZ-123");
-                if (result) {
-                    setCompliance(result);
-                }
-            } catch (error) {
-                console.log("Device record not found yet in database.");
-            }
-        };
-        fetchInitialCompliance();
+        // We removed the auto-fetching so the dashboard loads completely blank
+        // and waits for the user to explicitly click 'Run Validation Check'.
     }, []);
 
     const scanAndSubmit = async () => {
@@ -27,12 +18,13 @@ const Dashboard = () => {
             if (window.electron && window.electron.scanSystem) {
                 // Electron app: execute real PowerShell system scan and POST to backend
                 const inventory = await window.electron.scanSystem();
-                const result = await submitInventory("DEVICE-XYZ-123", inventory.os, inventory.components);
+                const deviceId = inventory.os.hostname || "UNKNOWN-DEVICE";
+                const result = await submitInventory(deviceId, inventory.os, inventory.components);
                 setCompliance(result);
             } else {
                 // Web Browser: try to fetch the saved real system configuration from the database
                 try {
-                    const result = await getCompliance("DEVICE-XYZ-123");
+                    const result = await getCompliance("latest");
                     setCompliance(result);
                 } catch (err) {
                     alert("Please run this app from the Electron desktop client to perform actual system scanning. No previous scan found in DB.");

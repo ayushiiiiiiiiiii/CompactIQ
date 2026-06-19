@@ -78,18 +78,23 @@ async def submit_inventory(request: InventoryRequest, db: AsyncSession = Depends
 
 @router.get("/graph/elements")
 async def get_graph_elements(db: AsyncSession = Depends(get_db)):
+    # Get the latest scanned device
+    device_result = await db.execute(select(Device).options(selectinload(Device.components)).order_by(Device.last_scanned.desc()))
+    device = device_result.scalars().first()
+    device_id = device.id if device else "Unknown Device"
+
     rules_result = await db.execute(select(Rule))
     rules = rules_result.scalars().all()
     graph_engine.build_graph_from_rules(rules)
     
     elements = []
     
-    # Central "Endpoint (DEVICE-XYZ-123)" node at the top
+    # Central "Endpoint" node at the top with actual device name
     elements.append({
         "id": "endpoint-device",
         "type": "input",
-        "data": { "label": "Endpoint (DEVICE-XYZ-123)" },
-        "position": { "x": 250, "y": 50 },
+        "data": { "label": f"Endpoint ({device_id})" },
+        "position": { "x": 400, "y": 50 },
         "style": { "background": "#0076CE", "color": "#fff" }
     })
     
@@ -155,12 +160,18 @@ async def get_graph_elements(db: AsyncSession = Depends(get_db)):
 @router.get("/{device_id}", response_model=ComplianceResponse)
 async def get_compliance(device_id: str, db: AsyncSession = Depends(get_db)):
     # 1. Retrieve device from DB with its components loaded
-    stmt = select(Device).options(selectinload(Device.components)).where(Device.id == device_id)
+    if device_id == "latest":
+        stmt = select(Device).options(selectinload(Device.components)).order_by(Device.last_scanned.desc())
+    else:
+        stmt = select(Device).options(selectinload(Device.components)).where(Device.id == device_id)
+        
     result = await db.execute(stmt)
     device = result.scalars().first()
     
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
+    
+    device_id = device.id # Update in case we used 'latest'
         
     # 2. Rebuild active rules graph
     rules_result = await db.execute(select(Rule))

@@ -56,6 +56,7 @@ foreach ($sw in $uniqueSoftware) {
     os = [PSCustomObject]@{
         name = $os.Caption
         version = $os.Version
+        hostname = $env:COMPUTERNAME
     }
     components = $components
 } | ConvertTo-Json -Depth 5
