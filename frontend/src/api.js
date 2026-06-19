@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = 'http://127.0.0.1:8000/api/v1';
 
 export const submitInventory = async (device_id, os, components) => {
     const payload = { device_id, os, components };
@@ -16,5 +16,10 @@ export const getCompliance = async (device_id) => {
 export const chatAssistant = async (device_id, query) => {
     const payload = { device_id, query };
     const response = await axios.post(`${API_BASE}/chat/`, payload);
+    return response.data;
+};
+
+export const getGraphElements = async () => {
+    const response = await axios.get(`${API_BASE}/inventory/graph/elements`);
     return response.data;
 };

@@ -22,11 +22,13 @@ async def upload_document(file: UploadFile = File(...), db: AsyncSession = Depen
         content = await file.read()
         await out_file.write(content)
 
-    # In a real scenario, we'd trigger a Celery task here.
-    # For MVP, we return a mock task ID.
+    # Trigger the real document ingestion and rule extraction
+    from app.services.document_ingestion import ingest_document_file
+    doc_id = await ingest_document_file(file_location, file.filename)
+
     return DocumentUploadResponse(
-        task_id="mock-celery-task-id-1234",
-        status="processing"
+        task_id=f"doc-ingestion-task-{doc_id if doc_id else 'unknown'}",
+        status="completed" if doc_id else "failed"
     )
 
 @router.get("/")

@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import 'react-flow-renderer/dist/style.css';
+import 'react-flow-renderer/dist/theme-default.css';
 import Dashboard from './pages/Dashboard';
 import GraphView from './pages/GraphView';
 
