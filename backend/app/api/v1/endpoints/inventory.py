@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.schemas.schemas import InventoryRequest, ComplianceResponse, Violation, Remediation
+from sqlalchemy import delete
+from sqlalchemy.orm import selectinload
+from app.schemas.schemas import InventoryRequest, ComplianceResponse, Violation, Remediation, ComponentInfo
 from app.db.database import get_db
 from app.models.models import Rule, Device, DeviceComponent
 from app.services.graph_service import graph_engine
@@ -10,16 +12,49 @@ router = APIRouter()
 
 @router.post("/", response_model=ComplianceResponse)
 async def submit_inventory(request: InventoryRequest, db: AsyncSession = Depends(get_db)):
-    # 1. Rebuild graph for MVP (in a real app, this is cached/singleton)
+    # 1. Rebuild graph from active rules
     rules_result = await db.execute(select(Rule))
     rules = rules_result.scalars().all()
     graph_engine.build_graph_from_rules(rules)
     
-    # 2. Validate
+    # 2. Validate components
     component_dicts = [{"type": c.type, "version": c.version, "vendor": c.vendor} for c in request.components]
     validation_result = graph_engine.validate_device(component_dicts)
     
-    # 3. Form Remediation if violations
+    # 3. Save / Update Device details in Database
+    stmt = select(Device).where(Device.id == request.device_id)
+    result = await db.execute(stmt)
+    device = result.scalars().first()
+    
+    if not device:
+        device = Device(
+            id=request.device_id, 
+            os_name=request.os.name, 
+            os_version=request.os.version,
+            compliance_score=validation_result["score"]
+        )
+        db.add(device)
+    else:
+        device.os_name = request.os.name
+        device.os_version = request.os.version
+        device.compliance_score = validation_result["score"]
+        
+    # Delete old components to refresh them
+    await db.execute(delete(DeviceComponent).where(DeviceComponent.device_id == request.device_id))
+    
+    # Insert new components
+    for c in request.components:
+        db_comp = DeviceComponent(
+            device_id=request.device_id,
+            component_type=c.type,
+            vendor=c.vendor,
+            version=c.version
+        )
+        db.add(db_comp)
+        
+    await db.commit()
+    
+    # 4. Form Remediation if violations exist
     remed = None
     if validation_result["violations"]:
         remed = Remediation(
@@ -34,18 +69,56 @@ async def submit_inventory(request: InventoryRequest, db: AsyncSession = Depends
         status="COMPLIANT" if validation_result["score"] == 100 else "NON_COMPLIANT",
         violations_count=len(validation_result["violations"]),
         violations=[Violation(**v) for v in validation_result["violations"]],
-        remediation=remed
+        remediation=remed,
+        os_name=request.os.name,
+        os_version=request.os.version,
+        components=request.components
     )
     return response
 
 @router.get("/{device_id}", response_model=ComplianceResponse)
 async def get_compliance(device_id: str, db: AsyncSession = Depends(get_db)):
-    # Mocking retrieval for simplicity in MVP. Actual implementation would query `devices` DB.
+    # 1. Retrieve device from DB with its components loaded
+    stmt = select(Device).options(selectinload(Device.components)).where(Device.id == device_id)
+    result = await db.execute(stmt)
+    device = result.scalars().first()
+    
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+        
+    # 2. Rebuild active rules graph
+    rules_result = await db.execute(select(Rule))
+    rules = rules_result.scalars().all()
+    graph_engine.build_graph_from_rules(rules)
+    
+    # 3. Validate components retrieved from DB
+    component_dicts = [{"type": c.component_type, "version": c.version, "vendor": c.vendor} for c in device.components]
+    validation_result = graph_engine.validate_device(component_dicts)
+    
+    # 4. Form Remediation if violations exist
+    remed = None
+    if validation_result["violations"]:
+        remed = Remediation(
+            recommended_action="Update target component to latest tested version.",
+            safe_to_execute=True,
+            simulated_script=f"Update-Component -Type {validation_result['violations'][0]['target_component']}"
+        )
+
+    components_info = [
+        ComponentInfo(type=c.component_type, vendor=c.vendor, version=c.version)
+        for c in device.components
+    ]
+
     return ComplianceResponse(
         device_id=device_id,
-        compliance_score=100,
-        status="COMPLIANT",
-        violations_count=0
+        compliance_score=validation_result["score"],
+        status="COMPLIANT" if validation_result["score"] == 100 else "NON_COMPLIANT",
+        violations_count=len(validation_result["violations"]),
+        violations=[Violation(**v) for v in validation_result["violations"]],
+        remediation=remed,
+        os_name=device.os_name,
+        os_version=device.os_version,
+        components=components_info
     )
 
 @router.get("/graph/elements")
@@ -123,4 +196,3 @@ async def get_graph_elements(db: AsyncSession = Depends(get_db)):
         edge_idx += 1
         
     return {"elements": elements}
-

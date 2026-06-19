@@ -35,6 +35,9 @@ class ComplianceResponse(BaseModel):
     violations_count: int
     violations: Optional[List[Violation]] = None
     remediation: Optional[Remediation] = None
+    os_name: Optional[str] = None
+    os_version: Optional[str] = None
+    components: Optional[List[ComponentInfo]] = None
 
 class DocumentUploadResponse(BaseModel):
     task_id: str
