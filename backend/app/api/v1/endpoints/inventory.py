@@ -76,51 +76,6 @@ async def submit_inventory(request: InventoryRequest, db: AsyncSession = Depends
     )
     return response
 
-@router.get("/{device_id}", response_model=ComplianceResponse)
-async def get_compliance(device_id: str, db: AsyncSession = Depends(get_db)):
-    # 1. Retrieve device from DB with its components loaded
-    stmt = select(Device).options(selectinload(Device.components)).where(Device.id == device_id)
-    result = await db.execute(stmt)
-    device = result.scalars().first()
-    
-    if not device:
-        raise HTTPException(status_code=404, detail="Device not found")
-        
-    # 2. Rebuild active rules graph
-    rules_result = await db.execute(select(Rule))
-    rules = rules_result.scalars().all()
-    graph_engine.build_graph_from_rules(rules)
-    
-    # 3. Validate components retrieved from DB
-    component_dicts = [{"type": c.component_type, "version": c.version, "vendor": c.vendor} for c in device.components]
-    validation_result = graph_engine.validate_device(component_dicts)
-    
-    # 4. Form Remediation if violations exist
-    remed = None
-    if validation_result["violations"]:
-        remed = Remediation(
-            recommended_action="Update target component to latest tested version.",
-            safe_to_execute=True,
-            simulated_script=f"Update-Component -Type {validation_result['violations'][0]['target_component']}"
-        )
-
-    components_info = [
-        ComponentInfo(type=c.component_type, vendor=c.vendor, version=c.version)
-        for c in device.components
-    ]
-
-    return ComplianceResponse(
-        device_id=device_id,
-        compliance_score=validation_result["score"],
-        status="COMPLIANT" if validation_result["score"] == 100 else "NON_COMPLIANT",
-        violations_count=len(validation_result["violations"]),
-        violations=[Violation(**v) for v in validation_result["violations"]],
-        remediation=remed,
-        os_name=device.os_name,
-        os_version=device.os_version,
-        components=components_info
-    )
-
 @router.get("/graph/elements")
 async def get_graph_elements(db: AsyncSession = Depends(get_db)):
     rules_result = await db.execute(select(Rule))
@@ -196,3 +151,48 @@ async def get_graph_elements(db: AsyncSession = Depends(get_db)):
         edge_idx += 1
         
     return {"elements": elements}
+
+@router.get("/{device_id}", response_model=ComplianceResponse)
+async def get_compliance(device_id: str, db: AsyncSession = Depends(get_db)):
+    # 1. Retrieve device from DB with its components loaded
+    stmt = select(Device).options(selectinload(Device.components)).where(Device.id == device_id)
+    result = await db.execute(stmt)
+    device = result.scalars().first()
+    
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+        
+    # 2. Rebuild active rules graph
+    rules_result = await db.execute(select(Rule))
+    rules = rules_result.scalars().all()
+    graph_engine.build_graph_from_rules(rules)
+    
+    # 3. Validate components retrieved from DB
+    component_dicts = [{"type": c.component_type, "version": c.version, "vendor": c.vendor} for c in device.components]
+    validation_result = graph_engine.validate_device(component_dicts)
+    
+    # 4. Form Remediation if violations exist
+    remed = None
+    if validation_result["violations"]:
+        remed = Remediation(
+            recommended_action="Update target component to latest tested version.",
+            safe_to_execute=True,
+            simulated_script=f"Update-Component -Type {validation_result['violations'][0]['target_component']}"
+        )
+
+    components_info = [
+        ComponentInfo(type=c.component_type, vendor=c.vendor, version=c.version)
+        for c in device.components
+    ]
+
+    return ComplianceResponse(
+        device_id=device_id,
+        compliance_score=validation_result["score"],
+        status="COMPLIANT" if validation_result["score"] == 100 else "NON_COMPLIANT",
+        violations_count=len(validation_result["violations"]),
+        violations=[Violation(**v) for v in validation_result["violations"]],
+        remediation=remed,
+        os_name=device.os_name,
+        os_version=device.os_version,
+        components=components_info
+    )
