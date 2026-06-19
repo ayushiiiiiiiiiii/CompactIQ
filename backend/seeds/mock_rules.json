@@ -1,0 +1,24 @@
+[
+  {
+    "source_component_type": "SecurityAgent",
+    "source_version": "7.17",
+    "target_component_type": "Intel_NIC",
+    "target_min_version": null,
+    "target_max_version": null,
+    "incompatible_version": "22.0",
+    "rule_type": "INCOMPATIBLE_WITH",
+    "reason": "Network drops observed with CS 7.17 when Intel NIC driver is < 23.0.",
+    "document_id": 1
+  },
+  {
+    "source_component_type": "SecurityAgent",
+    "source_version": "7.18",
+    "target_component_type": "Intel_NIC",
+    "target_min_version": "23.0",
+    "target_max_version": null,
+    "incompatible_version": null,
+    "rule_type": "REQUIRES",
+    "reason": "CS 7.18 requires newer network stack parsing.",
+    "document_id": 1
+  }
+]
