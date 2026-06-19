@@ -45,36 +45,21 @@ ipcMain.handle('scan-system', async () => {
     const scriptPath = path.join(__dirname, 'scan.ps1');
     exec(`powershell -ExecutionPolicy Bypass -File "${scriptPath}"`, (error, stdout, stderr) => {
       if (error) {
-        console.error("PowerShell scan failed, using fallback:", error);
+        console.error("PowerShell scan failed:", error);
         resolve({
-          os: { name: "Windows 11", version: "10.0.22621" },
-          components: [
-            { type: "BIOS", vendor: "Dell", version: "1.14.3" },
-            { type: "SecurityAgent", vendor: "CrowdStrike", version: "7.17" },
-            { type: "Intel_NIC", vendor: "Intel", version: "22.0" }
-          ]
+          os: { name: "Windows", version: "Unknown" },
+          components: []
         });
         return;
       }
       try {
         const result = JSON.parse(stdout.trim());
-        resolve({
-          os: { name: result.OSName, version: result.OSVersion },
-          components: [
-            { type: "BIOS", vendor: result.BIOSVendor, version: result.BIOSVersion },
-            { type: "SecurityAgent", vendor: "CrowdStrike", version: result.SecVersion },
-            { type: "Intel_NIC", vendor: "Intel", version: result.NICVersion }
-          ]
-        });
+        resolve(result);
       } catch (e) {
         console.error("JSON parse failed, using fallback:", e);
         resolve({
-          os: { name: "Windows 11", version: "10.0.22621" },
-          components: [
-            { type: "BIOS", vendor: "Dell", version: "1.14.3" },
-            { type: "SecurityAgent", vendor: "CrowdStrike", version: "7.17" },
-            { type: "Intel_NIC", vendor: "Intel", version: "22.0" }
-          ]
+          os: { name: "Windows", version: "Unknown" },
+          components: []
         });
       }
     });

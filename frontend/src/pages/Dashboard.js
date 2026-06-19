@@ -35,17 +35,7 @@ const Dashboard = () => {
                     const result = await getCompliance("DEVICE-XYZ-123");
                     setCompliance(result);
                 } catch (err) {
-                    // Fallback mock submission if the DB is empty (404)
-                    const mockInventory = {
-                        os: { name: "Windows 11", version: "10.0.22621" },
-                        components: [
-                          { type: "BIOS", vendor: "Dell", version: "1.14.3" },
-                          { type: "SecurityAgent", vendor: "CrowdStrike", version: "7.17" },
-                          { type: "Intel_NIC", vendor: "Intel", version: "22.0"}
-                        ]
-                    };
-                    const res = await submitInventory("DEVICE-XYZ-123", mockInventory.os, mockInventory.components);
-                    setCompliance(res);
+                    alert("Please run this app from the Electron desktop client to perform actual system scanning. No previous scan found in DB.");
                 }
             }
         } catch (error) {
