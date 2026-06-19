@@ -1,6 +1,7 @@
 const path = require('path');
 const { app, BrowserWindow, ipcMain } = require('electron');
-const isDev = require('electron-is-dev');
+
+const isDev = !app.isPackaged;
 
 function createWindow() {
   const win = new BrowserWindow({
