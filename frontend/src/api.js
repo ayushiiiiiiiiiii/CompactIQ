@@ -24,3 +24,14 @@ export const getGraphElements = async (deviceId) => {
     const response = await axios.get(url);
     return response.data;
 };
+
+export const uploadDocument = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await axios.post(`${API_BASE}/documents/ingest`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+    return response.data;
+};

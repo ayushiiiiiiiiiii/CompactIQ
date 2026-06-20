@@ -100,7 +100,7 @@ const Dashboard = () => {
                                                 <span style={{ marginLeft: '10px', fontSize: '12px', color: '#8b949e', fontFamily: 'monospace' }}>auto-remediate.ps1</span>
                                             </div>
                                             <pre style={{ margin: 0, padding: '16px', color: '#c9d1d9', fontSize: '13px', lineHeight: '1.5', overflowX: 'auto' }}>
-                                                {compliance.remediation.simulated_script.split('\n').map((line, i) => {
+                                                {compliance.remediation.simulated_script?.split('\n').map((line, i) => {
                                                     const isComment = line.trim().startsWith('#');
                                                     const isCommand = line.includes('Write-Host') || line.includes('Invoke-WebRequest') || line.includes('Start-Process');
                                                     return (

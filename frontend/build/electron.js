@@ -19,6 +19,10 @@ function createWindow() {
       ? 'http://localhost:3000'
       : `file://${path.join(__dirname, '../build/index.html')}`
   );
+
+  if (isDev) {
+    win.webContents.openDevTools();
+  }
 }
 
 app.whenReady().then(createWindow);
@@ -36,16 +40,28 @@ app.on('activate', () => {
 });
 
 ipcMain.handle('scan-system', async () => {
-  // Simulating WMI/PowerShell scan
+  const { exec } = require('child_process');
   return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        os: { name: "Windows 11", version: "10.0.22621" },
-        components: [
-          { type: "BIOS", vendor: "Dell", version: "1.14.3" },
-          { type: "SecurityAgent", vendor: "CrowdStrike", version: "7.17" }
-        ]
-      });
-    }, 1500);
+    const scriptPath = path.join(__dirname, 'scan.ps1');
+    exec(`powershell -ExecutionPolicy Bypass -File "${scriptPath}"`, (error, stdout, stderr) => {
+      if (error) {
+        console.error("PowerShell scan failed:", error);
+        resolve({
+          os: { name: "Windows", version: "Unknown" },
+          components: []
+        });
+        return;
+      }
+      try {
+        const result = JSON.parse(stdout.trim());
+        resolve(result);
+      } catch (e) {
+        console.error("JSON parse failed, using fallback:", e);
+        resolve({
+          os: { name: "Windows", version: "Unknown" },
+          components: []
+        });
+      }
+    });
   });
 });
