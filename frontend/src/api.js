@@ -19,11 +19,9 @@ export const chatAssistant = async (device_id, query) => {
     return response.data;
 };
 
-export const getGraphElements = async (deviceId) => {
-    const url = deviceId ? `${API_BASE}/inventory/graph/elements?device_id=${deviceId}` : `${API_BASE}/inventory/graph/elements`;
-    const response = await axios.get(url);
-    return response.data;
-};
+// NOTE: getGraphElements is intentionally removed.
+// Graph elements are returned inline from submitInventory() and getCompliance().
+// Access graph data from AppContext: const { graphData } = useContext(AppContext);
 
 export const getGlobalRules = async () => {
     const response = await axios.get(`${API_BASE}/inventory/rules`);

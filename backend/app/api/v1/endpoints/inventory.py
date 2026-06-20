@@ -209,7 +209,28 @@ async def submit_inventory(request: InventoryRequest, db: AsyncSession = Depends
 
 @router.get("/graph/elements")
 async def get_graph_elements_endpoint(device_id: str = None, db: AsyncSession = Depends(get_db)):
-    raise HTTPException(status_code=400, detail="Endpoint deprecated. Graph elements are returned directly via POST or GET /{device_id}.")
+    raise HTTPException(status_code=410, detail="Deprecated: Graph elements are returned directly via POST /inventory/ or GET /inventory/{device_id}.")
+
+@router.get("/rules")
+async def get_all_rules(db: AsyncSession = Depends(get_db)):
+    rules_result = await db.execute(select(Rule).options(selectinload(Rule.document)))
+    rules = rules_result.scalars().all()
+    
+    rules_data = []
+    for r in rules:
+        source_doc = r.document.filename if r.document else "Unknown Origin"
+        rules_data.append({
+            "id": r.id,
+            "source_component": f"{r.source_component_type} v{r.source_version}",
+            "target_component": f"{r.target_component_type} {r.target_min_version or ''} {r.incompatible_version or ''}".strip(),
+            "relation": r.rule_type,
+            "reason": r.reason,
+            "confidence": 95,
+            "ambiguous": False,
+            "source_document": source_doc
+        })
+        
+    return {"rules": rules_data}
 
 @router.get("/{device_id}", response_model=ComplianceResponse)
 async def get_compliance(device_id: str, db: AsyncSession = Depends(get_db)):
@@ -271,3 +292,4 @@ async def get_compliance(device_id: str, db: AsyncSession = Depends(get_db)):
         last_scanned=device.last_scanned,
         graph_elements=graph_data
     )
+

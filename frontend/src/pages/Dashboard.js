@@ -121,7 +121,7 @@ const Dashboard = () => {
                 <div className="glass-card" style={{ padding: '25px', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--card-border)', paddingBottom: '10px', marginBottom: '15px' }}>
                         <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Knowledge Graph</h3>
-                        <Link to="/graph" style={{ fontSize: '12px', color: '#0076CE', textDecoration: 'none', fontWeight: '500', backgroundColor: '#f0f9ff', padding: '4px 10px', borderRadius: '12px' }}>Explore &rarr;</Link>
+                        <Link to="/client/graph" style={{ fontSize: '12px', color: '#0076CE', textDecoration: 'none', fontWeight: '500', backgroundColor: '#f0f9ff', padding: '4px 10px', borderRadius: '12px' }}>Explore &rarr;</Link>
                     </div>
                     <div style={{ flex: 1, backgroundColor: '#f8fafc', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', minHeight: '300px', position: 'relative' }}>
                         {nodes.length > 0 ? (

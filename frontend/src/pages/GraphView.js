@@ -1,18 +1,56 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import ReactFlow, { Background, Controls } from 'react-flow-renderer';
 import { AppContext } from '../context/AppContext';
 import ComponentModal from '../components/ComponentModal';
 import { Link } from 'react-router-dom';
+import { getCompliance } from '../api';
 
-const GraphView = () => {
+const GraphView = ({ isGlobal }) => {
     const { graphData, setSelectedComponent, setIsModalOpen } = useContext(AppContext);
+    const [adminGraphData, setAdminGraphData] = useState(null);
+    const [adminLoading, setAdminLoading] = useState(false);
+    const [adminError, setAdminError] = useState(null);
 
-    if (!graphData || !graphData.elements) {
+    // In admin/global mode, fetch the latest device's graph independently
+    useEffect(() => {
+        if (!isGlobal) return;
+        setAdminLoading(true);
+        getCompliance('latest')
+            .then(data => {
+                if (data && data.graph_elements) {
+                    setAdminGraphData(data.graph_elements);
+                } else {
+                    setAdminError('No device data ingested yet. Submit a scan from the Client view first.');
+                }
+            })
+            .catch(() => {
+                setAdminError('No device scanned yet. Use the Client view to run a scan first.');
+            })
+            .finally(() => setAdminLoading(false));
+    }, [isGlobal]);
+
+    const activeGraphData = isGlobal ? adminGraphData : graphData;
+
+    if (isGlobal && adminLoading) {
+        return <div style={{ padding: '40px', color: '#64748b', textAlign: 'center' }}>Loading global knowledge graph...</div>;
+    }
+
+    if (isGlobal && adminError) {
+        return (
+            <div style={{ padding: '40px', textAlign: 'center' }}>
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}>📊</div>
+                <h3 style={{ color: '#334155' }}>Global Graph</h3>
+                <p style={{ color: '#64748b' }}>{adminError}</p>
+            </div>
+        );
+    }
+
+    if (!activeGraphData || !activeGraphData.elements) {
         return <div style={{ padding: '20px', color: '#64748b' }}>No graph data available. Please ensure the scan has completed.</div>;
     }
 
-    const initialNodes = graphData.elements.filter(el => !el.source && !el.target);
-    const initialEdges = graphData.elements.filter(el => el.source && el.target);
+    const initialNodes = activeGraphData.elements.filter(el => !el.source && !el.target);
+    const initialEdges = activeGraphData.elements.filter(el => el.source && el.target);
 
     const openModalFor = (nodeId) => {
         const node = initialNodes.find(n => n.id === nodeId);
@@ -22,6 +60,9 @@ const GraphView = () => {
         }
     };
 
+    const backLink = isGlobal ? '/admin/ingest' : '/client/scan';
+    const backLabel = isGlobal ? '← Back to Admin' : '← Back to Dashboard';
+
     return (
         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', animation: 'fadeIn 0.5s ease-in' }}>
             <ComponentModal />
@@ -29,10 +70,12 @@ const GraphView = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>
                 <div>
                     <h1 style={{ margin: '0 0 5px 0', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <Link to="/" style={{ color: '#0076CE', textDecoration: 'none', fontSize: '16px' }}>&larr; Back to Dashboard</Link>
-                        Knowledge Graph Explorer
+                        <Link to={backLink} style={{ color: '#0076CE', textDecoration: 'none', fontSize: '16px' }}>{backLabel}</Link>
+                        {isGlobal ? 'Global Knowledge Graph' : 'Knowledge Graph Explorer'}
                     </h1>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Visualizing active components and their dependencies.</p>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
+                        {isGlobal ? 'System-wide component graph from latest device scan.' : 'Visualizing active components and their dependencies.'}
+                    </p>
                 </div>
                 <div style={{ fontSize: '13px', color: '#94a3b8', backgroundColor: '#f8fafc', padding: '5px 10px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
                     <strong>{initialNodes.length}</strong> Nodes | <strong>{initialEdges.length}</strong> Edges

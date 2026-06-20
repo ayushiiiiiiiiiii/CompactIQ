@@ -11,7 +11,7 @@ import RulesMatrix from './pages/RulesMatrix';
 import ComponentExplorer from './pages/ComponentExplorer';
 import { Sun, Moon, Database, UploadCloud, Monitor, Network, Table } from 'lucide-react';
 import { AppContext } from './context/AppContext';
-import { submitInventory, getCompliance, getGraphElements } from './api';
+import { submitInventory, getCompliance } from './api';
 
 const LOADING_PHASES = [
     "Initializing CompactIQ Enterprise...",
@@ -184,7 +184,7 @@ const ClientLayout = ({ theme, toggleTheme }) => {
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <li><Link to="/client/scan" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Monitor size={18} /> My Device Scan</Link></li>
           <li><Link to="/client/components" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Database size={18} /> Component Explorer</Link></li>
-          <li><Link to="/client/graph" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Network size={18} /> Local Graph</Link></li>
+          <li><Link to="/client/graph" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Network size={18} /> Knowledge Graph</Link></li>
         </ul>
         
         <div style={{ marginTop: 'auto', padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '12px' }}>
