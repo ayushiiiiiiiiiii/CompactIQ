@@ -38,7 +38,6 @@ const AdminLayout = ({ theme, toggleTheme }) => {
         
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <li><Link to="/admin/ingest" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><UploadCloud size={18} /> Document Ingestion</Link></li>
-          <li><Link to="/admin/graph" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Network size={18} /> Global Graph</Link></li>
           <li><Link to="/admin/rules" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Table size={18} /> Rules Matrix</Link></li>
         </ul>
         
@@ -217,7 +216,6 @@ function App() {
         
         <Route path="/admin" element={<AdminLayout theme={theme} toggleTheme={toggleTheme} />}>
           <Route path="ingest" element={<DocumentUpload />} />
-          <Route path="graph" element={<GraphView isGlobal={true} />} />
           <Route path="rules" element={<RulesMatrix />} />
         </Route>
         
