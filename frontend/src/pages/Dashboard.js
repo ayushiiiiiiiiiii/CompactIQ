@@ -85,17 +85,24 @@ const Dashboard = () => {
             <div style={{ marginBottom: '20px' }}>
                 <h3 style={{ margin: '0 0 15px 0', color: '#334155', fontSize: '18px' }}>Component Health Explorer</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
-                    {nodes.filter(n => n.id !== 'endpoint-device').map((node, i) => {
-                        const isNodeCompliant = node.data.status === 'Compliant';
-                        const isNodeWarning = node.data.status === 'Warning';
-                        const isNodeMissing = node.data.status === 'Missing';
-                        const tileColor = isNodeCompliant ? '#10b981' : isNodeWarning ? '#f59e0b' : isNodeMissing ? '#64748b' : '#ef4444';
-                        const tileBg = isNodeCompliant ? '#f0fdf4' : isNodeWarning ? '#fffbeb' : isNodeMissing ? '#f8fafc' : '#fef2f2';
+                    {complianceResult.components && complianceResult.components.map((comp, i) => {
+                        const compId = `${comp.type}_${comp.version}`;
+                        const isViolationSource = complianceResult.violations?.find(v => v.source_component === compId);
+                        
+                        let tileStatus = 'Compliant';
+                        if (isViolationSource) {
+                             tileStatus = isViolationSource.severity === 'CRITICAL' ? 'Error' : 'Warning';
+                        }
+                        
+                        const isNodeCompliant = tileStatus === 'Compliant';
+                        const isNodeWarning = tileStatus === 'Warning';
+                        const tileColor = isNodeCompliant ? '#10b981' : isNodeWarning ? '#f59e0b' : '#ef4444';
+                        const tileBg = isNodeCompliant ? '#f0fdf4' : isNodeWarning ? '#fffbeb' : '#fef2f2';
 
                         return (
                             <div 
                                 key={i} 
-                                onClick={() => openModalFor(node.id)}
+                                onClick={() => openModalFor(compId)}
                                 style={{ 
                                     backgroundColor: tileBg, borderRadius: '10px', border: `1px solid ${tileColor}`,
                                     padding: '15px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
@@ -105,13 +112,13 @@ const Dashboard = () => {
                                 onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.02)'; }}
                             >
                                 <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1e293b', marginBottom: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {node.data.componentName || node.id}
+                                    {comp.vendor && comp.vendor !== 'Unknown' ? `${comp.vendor} ${comp.type}` : comp.type}
                                 </div>
                                 <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '10px' }}>
-                                    v{node.data.version || 'Unknown'}
+                                    v{comp.version}
                                 </div>
                                 <span style={{ backgroundColor: tileBg, color: tileColor, padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}>
-                                    {node.data.status}
+                                    {tileStatus}
                                 </span>
                             </div>
                         );
