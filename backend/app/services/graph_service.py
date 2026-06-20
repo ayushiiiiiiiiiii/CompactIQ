@@ -101,4 +101,134 @@ class GraphService:
             "violations": violations
         }
 
+    def generate_knowledge_graph(self, label_id: str, components: List[Dict[str, Any]], violations: List[Dict[str, Any]]) -> Dict[str, Any]:
+        G = nx.DiGraph()
+        
+        for idx, comp in enumerate(components):
+            comp_type = comp["type"]
+            if not G.has_node(comp_type):
+                G.add_node(comp_type, label=f"{comp_type} v{comp.get('version', 'Unknown')}", status="Compliant", version=comp.get("version", "Unknown"))
+                
+        for v in violations:
+            tgt = v.get("target_component", "")
+            if "(Missing)" in tgt:
+                tgt_clean = tgt.replace(" (Missing)", "")
+                if not G.has_node(tgt_clean):
+                    G.add_node(tgt_clean, label=f"{tgt_clean} (Missing)", status="Missing", version="N/A")
+
+        for v in violations:
+            src = v.get("source_component")
+            tgt = v.get("target_component", "").replace(" (Missing)", "")
+            sev = v.get("severity")
+            
+            for node in [src, tgt]:
+                if node and G.has_node(node):
+                    if G.nodes[node]["status"] != "Missing":
+                        if sev == "CRITICAL":
+                            G.nodes[node]["status"] = "Non-Compliant"
+                        elif sev == "HIGH" and G.nodes[node]["status"] != "Non-Compliant":
+                            G.nodes[node]["status"] = "Warning"
+                        elif G.nodes[node]["status"] == "Compliant":
+                            G.nodes[node]["status"] = "Warning"
+
+        edge_idx = 0
+        seen_edges = set()
+        
+        for rule in self.rules:
+            src = rule.source_component_type
+            tgt = rule.target_component_type
+            
+            if G.has_node(src) and G.has_node(tgt):
+                edge_key = f"{src}-{tgt}-{rule.rule_type}"
+                if edge_key not in seen_edges:
+                    seen_edges.add(edge_key)
+                    is_violation = False
+                    for v in violations:
+                        v_src = v.get("source_component")
+                        v_tgt = v.get("target_component", "").replace(" (Missing)", "")
+                        if v_src == src and v_tgt == tgt:
+                            is_violation = True
+                            break
+                    
+                    G.add_edge(src, tgt, label=rule.rule_type, is_violation=is_violation)
+                    
+        G.add_node("endpoint-device", label=f"Endpoint ({label_id})", status="Endpoint", version="N/A")
+        
+        for node in list(G.nodes()):
+            if node != "endpoint-device" and G.in_degree(node) == 0:
+                G.add_edge("endpoint-device", node, label="HAS_COMPONENT", is_violation=False)
+
+        elements = []
+        
+        if nx.is_directed_acyclic_graph(G):
+            generations = list(nx.topological_generations(G))
+        else:
+            generations = [list(G.nodes())]
+            
+        y_start = 50
+        y_gap = 180
+        x_gap = 250
+        
+        node_positions = {}
+        for gen_idx, gen in enumerate(generations):
+            x_start = 400 - (len(gen) * x_gap) / 2
+            for i, node in enumerate(gen):
+                node_positions[node] = {"x": x_start + i * x_gap, "y": y_start + gen_idx * y_gap}
+
+        for node in G.nodes():
+            data = G.nodes[node]
+            status = data.get("status", "Compliant")
+            
+            style = { "borderRadius": "8px", "padding": "10px", "background": "#f0fdf4", "border": "2px solid #10b981", "color": "#1e293b" }
+            if status == "Missing":
+                style = { "border": "2px dashed #f59e0b", "background": "#fff", "color": "#1e293b" }
+            elif status == "Non-Compliant":
+                style = { "border": "2px solid #ef4444", "background": "#fef2f2", "color": "#1e293b" }
+            elif status == "Warning":
+                style = { "border": "2px solid #f59e0b", "background": "#fffbeb", "color": "#1e293b" }
+            elif status == "Endpoint":
+                style = { "background": "#0076CE", "color": "#fff", "border": "2px solid #005A9E" }
+
+            elements.append({
+                "id": node,
+                "data": {
+                    "label": data.get("label"),
+                    "componentName": node,
+                    "version": data.get("version"),
+                    "status": status
+                },
+                "position": node_positions.get(node, {"x": 400, "y": 50}),
+                "style": style
+            })
+
+        for u, v, data in G.edges(data=True):
+            label = data.get("label", "DEPENDS_ON")
+            is_violation = data.get("is_violation", False)
+            
+            style = { "stroke": "#94a3b8", "strokeWidth": 2 }
+            animated = False
+            
+            if is_violation:
+                if label == "INCOMPATIBLE_WITH" or label == "CONFLICTS_WITH":
+                    style = { "stroke": "#ef4444", "strokeWidth": 2 }
+                else:
+                    style = { "stroke": "#f59e0b", "strokeWidth": 2 }
+                animated = True
+            elif label == "REQUIRES" or label == "DEPENDS_ON" or label == "SUPPORTED_ON":
+                style = { "stroke": "#3b82f6", "strokeWidth": 2 }
+            elif label == "HAS_COMPONENT":
+                style = { "stroke": "#cbd5e1", "strokeWidth": 1, "strokeDasharray": "5 5" }
+
+            elements.append({
+                "id": f"edge-{u}-{v}-{edge_idx}",
+                "source": u,
+                "target": v,
+                "label": label,
+                "style": style,
+                "animated": animated
+            })
+            edge_idx += 1
+
+        return {"elements": elements}
+
 graph_engine = GraphService()

@@ -12,117 +12,7 @@ from app.services.graph_service import graph_engine
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-def generate_graph_elements(label_id: str, components: list, violations: list):
-    elements = []
-    
-    # Central Endpoint Node
-    elements.append({
-        "id": "endpoint-device",
-        "type": "input",
-        "data": { "label": f"Endpoint ({label_id})" },
-        "position": { "x": 400, "y": 50 },
-        "style": { "background": "#0076CE", "color": "#fff", "border": "2px solid #005A9E", "borderRadius": "8px", "padding": "10px" }
-    })
-    
-    node_x_spacing = 220
-    node_y_start = 180
-    
-    # Process actual components
-    seen_nodes = set()
-    for idx, comp in enumerate(components):
-        base_node_id = comp["type"]
-        node_id = base_node_id
-        
-        # Ensure unique node IDs
-        if node_id in seen_nodes:
-            node_id = f"{base_node_id}-{idx}"
-        seen_nodes.add(node_id)
-        
-        is_red = False
-        is_yellow = False
-        for v in violations:
-            if v.get("source_component") == base_node_id or v.get("target_component") == base_node_id:
-                if v.get("severity") == "CRITICAL":
-                    is_red = True
-                else:
-                    is_yellow = True
-                    
-        node_style = { "border": "2px solid #10b981", "background": "#f0fdf4", "borderRadius": "8px", "padding": "10px" } 
-        status_label = "Compliant"
-        if is_red:
-            node_style = { "border": "2px solid #ef4444", "background": "#fef2f2", "borderRadius": "8px", "padding": "10px" }
-            status_label = "Non-Compliant"
-        elif is_yellow:
-            node_style = { "border": "2px solid #f59e0b", "background": "#fffbeb", "borderRadius": "8px", "padding": "10px" }
-            status_label = "Warning"
-            
-        elements.append({
-            "id": node_id,
-            "data": { 
-                "label": f"{comp['type']} v{comp['version']}",
-                "componentName": comp['type'],
-                "version": comp['version'],
-                "status": status_label
-            },
-            "position": { "x": 100 + (idx % 4) * node_x_spacing, "y": node_y_start + (idx // 4) * 150 },
-            "style": node_style
-        })
-        
-        # Edge from endpoint with unique ID
-        elements.append({
-            "id": f"edge-endpoint-{node_id}-{idx}",
-            "source": "endpoint-device",
-            "target": node_id,
-            "label": "HAS_COMPONENT",
-            "style": { "stroke": "#cbd5e1" }
-        })
-        
-    # Generate edges from violations
-    edge_idx = 0
-    ghost_x = 100
-    seen_violation_edges = set()
-    seen_ghost_nodes = set()
-    
-    for v in violations:
-        src = v.get("source_component")
-        tgt = v.get("target_component")
-        dep = v.get("dependency", "DEPENDS_ON")
-        
-        if "(Missing)" in tgt:
-            tgt_clean = tgt.replace(" (Missing)", "")
-            if tgt_clean not in seen_ghost_nodes:
-                elements.append({
-                    "id": tgt_clean,
-                    "data": { 
-                        "label": f"{tgt_clean} (Missing)",
-                        "componentName": tgt_clean,
-                        "version": "N/A",
-                        "status": "Missing"
-                    },
-                    "position": { "x": ghost_x, "y": node_y_start + 150 },
-                    "style": { "border": "2px dashed #f59e0b", "background": "#fff", "borderRadius": "8px", "padding": "10px" }
-                })
-                seen_ghost_nodes.add(tgt_clean)
-                ghost_x += 220
-            tgt = tgt_clean
-            
-        # Deduplicate identical source-target violation edges
-        edge_key = f"{src}-{tgt}-{dep}"
-        if edge_key in seen_violation_edges:
-            continue
-        seen_violation_edges.add(edge_key)
-            
-        elements.append({
-            "id": f"edge-rel-{src}-{tgt}-{edge_idx}",
-            "source": src,
-            "target": tgt,
-            "label": dep,
-            "style": { "stroke": "#ef4444", "strokeWidth": 2 } if dep == "INCOMPATIBLE" else { "stroke": "#f59e0b", "strokeWidth": 2 },
-            "animated": True
-        })
-        edge_idx += 1
-        
-    return {"elements": elements}
+
 
 @router.post("/", response_model=ComplianceResponse)
 async def submit_inventory(request: InventoryRequest, db: AsyncSession = Depends(get_db)):
@@ -186,7 +76,7 @@ async def submit_inventory(request: InventoryRequest, db: AsyncSession = Depends
                 roadmap=roadmap_steps
             )
 
-        graph_data = generate_graph_elements(request.device_id, component_dicts, validation_result["violations"])
+        graph_data = graph_engine.generate_knowledge_graph(request.device_id, component_dicts, validation_result["violations"])
 
         response = ComplianceResponse(
             device_id=request.device_id,
@@ -276,7 +166,7 @@ async def get_compliance(device_id: str, db: AsyncSession = Depends(get_db)):
         for c in device.components
     ]
 
-    graph_data = generate_graph_elements(device_id, component_dicts, validation_result["violations"])
+    graph_data = graph_engine.generate_knowledge_graph(device_id, component_dicts, validation_result["violations"])
 
     return ComplianceResponse(
         device_id=device_id,

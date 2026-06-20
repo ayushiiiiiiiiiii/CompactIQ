@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 
 const ComponentModal = () => {
-    const { isModalOpen, setIsModalOpen, selectedComponent, complianceResult } = useContext(AppContext);
+    const { isModalOpen, setIsModalOpen, selectedComponent, complianceResult, graphData } = useContext(AppContext);
 
     if (!isModalOpen || !selectedComponent) return null;
 
@@ -24,6 +24,11 @@ const ComponentModal = () => {
 
     const badgeColor = isCompliant ? '#10b981' : isWarning ? '#f59e0b' : isMissing ? '#64748b' : '#ef4444';
     const badgeBg = isCompliant ? '#d1fae5' : isWarning ? '#fef3c7' : isMissing ? '#f1f5f9' : '#fee2e2';
+    
+    // Extract upstream and downstream from graphData
+    const edges = (graphData && graphData.elements) ? graphData.elements.filter(el => el.source && el.target) : [];
+    const upstream = edges.filter(e => e.target === selectedComponent.id);
+    const downstream = edges.filter(e => e.source === selectedComponent.id);
     
     return (
         <div style={{
@@ -58,6 +63,32 @@ const ComponentModal = () => {
 
                 {/* Content */}
                 <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+                    {/* Dependency Chain Section */}
+                    <div style={{ marginBottom: '20px' }}>
+                        <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: 'var(--text-primary)', borderBottom: '1px solid var(--card-border)', paddingBottom: '8px' }}>Dependency Chain</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                            <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                <strong style={{ display: 'block', color: '#475569', fontSize: '13px', textTransform: 'uppercase', marginBottom: '8px' }}>Required By (Upstream)</strong>
+                                {upstream.length > 0 ? (
+                                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#334155', fontSize: '14px' }}>
+                                        {upstream.map((e, idx) => <li key={idx}><strong>{e.source}</strong> ({e.label})</li>)}
+                                    </ul>
+                                ) : (
+                                    <div style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>No upstream dependencies.</div>
+                                )}
+                            </div>
+                            <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                <strong style={{ display: 'block', color: '#475569', fontSize: '13px', textTransform: 'uppercase', marginBottom: '8px' }}>Depends On (Downstream)</strong>
+                                {downstream.length > 0 ? (
+                                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#334155', fontSize: '14px' }}>
+                                        {downstream.map((e, idx) => <li key={idx}><strong>{e.target}</strong> ({e.label})</li>)}
+                                    </ul>
+                                ) : (
+                                    <div style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>No downstream dependencies.</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                     
                     {violations.length > 0 ? (
                         <div style={{ marginBottom: '20px' }}>

@@ -1,28 +1,92 @@
-import React, { useContext } from 'react';
-import ReactFlow, { Background, Controls } from 'react-flow-renderer';
+import React, { useContext, useState, useMemo } from 'react';
+import ReactFlow, { Background, Controls, MarkerType } from 'react-flow-renderer';
 import { AppContext } from '../context/AppContext';
 import ComponentModal from '../components/ComponentModal';
 import { Link } from 'react-router-dom';
 
-
 const GraphView = () => {
     const { graphData, setSelectedComponent, setIsModalOpen } = useContext(AppContext);
+    const [filter, setFilter] = useState('ALL'); // ALL, VIOLATIONS, HEALTHY
+    const [selectedNodeId, setSelectedNodeId] = useState(null);
 
     const activeGraphData = graphData;
+
+    // Use useMemo to prevent unnecessary recalculations
+    const { nodes, edges } = useMemo(() => {
+        if (!activeGraphData || !activeGraphData.elements) return { nodes: [], edges: [] };
+        
+        let initialNodes = activeGraphData.elements.filter(el => !el.source && !el.target);
+        let initialEdges = activeGraphData.elements.filter(el => el.source && el.target);
+
+        // Apply global filters
+        if (filter === 'VIOLATIONS') {
+            initialNodes = initialNodes.filter(n => n.data.status === 'Non-Compliant' || n.data.status === 'Warning' || n.data.status === 'Missing');
+            const validNodeIds = new Set(initialNodes.map(n => n.id));
+            initialEdges = initialEdges.filter(e => validNodeIds.has(e.source) && validNodeIds.has(e.target));
+        } else if (filter === 'HEALTHY') {
+            initialNodes = initialNodes.filter(n => n.data.status === 'Compliant' || n.data.status === 'Endpoint');
+            const validNodeIds = new Set(initialNodes.map(n => n.id));
+            initialEdges = initialEdges.filter(e => validNodeIds.has(e.source) && validNodeIds.has(e.target));
+        }
+
+        // Apply highlighting logic if a node is selected
+        if (selectedNodeId) {
+            const connectedNodes = new Set();
+            connectedNodes.add(selectedNodeId);
+            
+            // Basic BFS for upstream/downstream dependencies
+            let queue = [selectedNodeId];
+            while (queue.length > 0) {
+                const current = queue.shift();
+                initialEdges.forEach(e => {
+                    if (e.source === current && !connectedNodes.has(e.target)) {
+                        connectedNodes.add(e.target);
+                        queue.push(e.target);
+                    }
+                    if (e.target === current && !connectedNodes.has(e.source)) {
+                        connectedNodes.add(e.source);
+                        queue.push(e.source);
+                    }
+                });
+            }
+
+            initialNodes = initialNodes.map(n => ({
+                ...n,
+                style: {
+                    ...n.style,
+                    opacity: connectedNodes.has(n.id) ? 1 : 0.2
+                }
+            }));
+            
+            initialEdges = initialEdges.map(e => ({
+                ...e,
+                style: {
+                    ...e.style,
+                    opacity: (connectedNodes.has(e.source) && connectedNodes.has(e.target)) ? 1 : 0.1
+                }
+            }));
+        }
+
+        return { nodes: initialNodes, edges: initialEdges };
+    }, [activeGraphData, filter, selectedNodeId]);
 
     if (!activeGraphData || !activeGraphData.elements) {
         return <div style={{ padding: '20px', color: '#64748b' }}>No graph data available. Please ensure the scan has completed.</div>;
     }
 
-    const initialNodes = activeGraphData.elements.filter(el => !el.source && !el.target);
-    const initialEdges = activeGraphData.elements.filter(el => el.source && el.target);
-
-    const openModalFor = (nodeId) => {
-        const node = initialNodes.find(n => n.id === nodeId);
-        if (node) {
+    const onNodeClick = (e, node) => {
+        // Toggle selection or select new
+        if (selectedNodeId === node.id) {
+            setSelectedNodeId(null);
+        } else {
+            setSelectedNodeId(node.id);
             setSelectedComponent(node);
             setIsModalOpen(true);
         }
+    };
+
+    const onPaneClick = () => {
+        setSelectedNodeId(null);
     };
 
     const backLink = '/client/scan';
@@ -39,21 +103,39 @@ const GraphView = () => {
                         Knowledge Graph Explorer
                     </h1>
                     <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
-                        Visualizing active components and their dependencies.
+                        Visualizing dependency chains and compatibility logic.
                     </p>
                 </div>
-                <div style={{ fontSize: '13px', color: '#94a3b8', backgroundColor: '#f8fafc', padding: '5px 10px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
-                    <strong>{initialNodes.length}</strong> Nodes | <strong>{initialEdges.length}</strong> Edges
+                
+                {/* Filters */}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                        onClick={() => setFilter('ALL')}
+                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: filter === 'ALL' ? '#e2e8f0' : '#fff', cursor: 'pointer' }}
+                    >All Components</button>
+                    <button 
+                        onClick={() => setFilter('VIOLATIONS')}
+                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #fca5a5', background: filter === 'VIOLATIONS' ? '#fee2e2' : '#fff', cursor: 'pointer', color: '#b91c1c' }}
+                    >Violations Only</button>
+                    <button 
+                        onClick={() => setFilter('HEALTHY')}
+                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #86efac', background: filter === 'HEALTHY' ? '#dcfce3' : '#fff', cursor: 'pointer', color: '#15803d' }}
+                    >Healthy Only</button>
+                    <button 
+                        onClick={() => { setFilter('ALL'); setSelectedNodeId(null); }}
+                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#f8fafc', cursor: 'pointer', marginLeft: '10px' }}
+                    >Reset Graph</button>
                 </div>
             </div>
 
             <div style={{ flex: 1, backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'hidden', position: 'relative' }}>
                 <ReactFlow 
-                    nodes={initialNodes} 
-                    edges={initialEdges} 
+                    nodes={nodes} 
+                    edges={edges} 
                     fitView 
                     style={{ width: '100%', height: '100%' }}
-                    onNodeClick={(e, node) => openModalFor(node.id)}
+                    onNodeClick={onNodeClick}
+                    onPaneClick={onPaneClick}
                 >
                     <Background color="#cbd5e1" gap={16} />
                     <Controls />
@@ -74,28 +156,31 @@ const GraphView = () => {
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                                 <div style={{ width: '12px', height: '12px', backgroundColor: '#fef2f2', border: '2px solid #ef4444', borderRadius: '2px' }}></div>
-                                <span style={{ color: '#334155' }}>Violation Present</span>
+                                <span style={{ color: '#334155' }}>Violation / Conflict Present</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <div style={{ width: '12px', height: '12px', backgroundColor: '#fff', border: '2px dashed #f59e0b', borderRadius: '2px' }}></div>
-                                <span style={{ color: '#334155' }}>Missing Required Component</span>
+                                <span style={{ color: '#334155' }}>Missing Dependency</span>
                             </div>
                         </div>
 
                         <div>
-                            <div style={{ color: '#475569', marginBottom: '5px', fontWeight: 'bold' }}>Edge Relationships</div>
+                            <div style={{ color: '#475569', marginBottom: '5px', fontWeight: 'bold' }}>Relationships</div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                <div style={{ width: '20px', height: '2px', backgroundColor: '#cbd5e1' }}></div>
-                                <span style={{ color: '#334155' }}>HAS_COMPONENT</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                <div style={{ width: '20px', height: '2px', backgroundColor: '#f59e0b' }}></div>
+                                <div style={{ width: '20px', height: '2px', backgroundColor: '#3b82f6' }}></div>
                                 <span style={{ color: '#334155' }}>REQUIRES / DEPENDS_ON</span>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                                 <div style={{ width: '20px', height: '2px', backgroundColor: '#ef4444' }}></div>
-                                <span style={{ color: '#334155' }}>INCOMPATIBLE / CONFLICTS</span>
+                                <span style={{ color: '#334155' }}>INCOMPATIBLE_WITH</span>
                             </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{ width: '20px', height: '2px', backgroundColor: '#cbd5e1', borderTop: '2px dashed #cbd5e1' }}></div>
+                                <span style={{ color: '#334155' }}>HAS_COMPONENT</span>
+                            </div>
+                        </div>
+                        <div style={{ marginTop: '10px', fontStyle: 'italic', color: '#64748b' }}>
+                            Click a node to highlight chain.
                         </div>
                     </div>
                 </ReactFlow>

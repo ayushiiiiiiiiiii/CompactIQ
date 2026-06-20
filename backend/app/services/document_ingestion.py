@@ -80,10 +80,10 @@ async def extract_rules_from_text(text: str) -> List[Dict[str, Any]]:
     
     # Demonstration Rules to naturally lower score
     
-    # 1. OS to BIOS Dependency
+    # 1. OS requires BIOS
     rules.append({
         "source_component_type": "OS",
-        "source_version": "0.0.0", # applies broadly
+        "source_version": "0.0.0",
         "target_component_type": "BIOS",
         "target_min_version": "1.15.0",
         "target_max_version": None,
@@ -92,28 +92,76 @@ async def extract_rules_from_text(text: str) -> List[Dict[str, Any]]:
         "reason": "Enterprise policy dictates Windows endpoints must run modern BIOS firmware."
     })
     
-    # 2. SecurityAgent to NIC Conflict
+    # 2. BIOS depends on Firmware
+    rules.append({
+        "source_component_type": "BIOS",
+        "source_version": "0.0.0",
+        "target_component_type": "Firmware",
+        "target_min_version": "2.0.0",
+        "target_max_version": None,
+        "incompatible_version": None,
+        "rule_type": "DEPENDS_ON",
+        "reason": "BIOS interfaces directly with base component firmware."
+    })
+
+    # 3. Security Agent requires OS
     rules.append({
         "source_component_type": "SecurityAgent",
+        "source_version": "0.0.0",
+        "target_component_type": "OS",
+        "target_min_version": "10.0.0",
+        "target_max_version": None,
+        "incompatible_version": None,
+        "rule_type": "REQUIRES",
+        "reason": "Security Agent requires supported Windows 11 build."
+    })
+    
+    # 4. Network Driver requires Intel NIC
+    rules.append({
+        "source_component_type": "NetworkDriver",
         "source_version": "0.0.0",
         "target_component_type": "Intel_NIC",
         "target_min_version": None,
         "target_max_version": None,
-        "incompatible_version": "22.0",
-        "rule_type": "INCOMPATIBLE_WITH",
-        "reason": "Security Agents experience kernel deadlocks with older Intel NIC drivers."
+        "incompatible_version": None,
+        "rule_type": "REQUIRES",
+        "reason": "Network driver is specific to Intel hardware interfaces."
     })
     
-    # 3. SecurityAgent Requires TPB/Software (Demo fallback)
+    # 5. TPM required by OS
     rules.append({
-        "source_component_type": "SecurityAgent",
+        "source_component_type": "OS",
         "source_version": "0.0.0",
-        "target_component_type": "Software",
-        "target_min_version": "1.0",
+        "target_component_type": "TPM",
+        "target_min_version": "2.0",
         "target_max_version": None,
         "incompatible_version": None,
         "rule_type": "REQUIRES",
-        "reason": "Endpoint security agents require baseline baseline support software to function."
+        "reason": "Windows 11 strictly requires TPM 2.0 for security features."
+    })
+    
+    # 6. Application supported on OS
+    rules.append({
+        "source_component_type": "Application",
+        "source_version": "0.0.0",
+        "target_component_type": "OS",
+        "target_min_version": "10.0.0",
+        "target_max_version": None,
+        "incompatible_version": None,
+        "rule_type": "SUPPORTED_ON",
+        "reason": "Corporate application relies on modern OS libraries."
+    })
+    
+    # 7. Old Software conflicts with OS
+    rules.append({
+        "source_component_type": "LegacyApp",
+        "source_version": "0.0.0",
+        "target_component_type": "OS",
+        "target_min_version": None,
+        "target_max_version": None,
+        "incompatible_version": "10.0.0",
+        "rule_type": "CONFLICTS_WITH",
+        "reason": "Legacy application is known to cause blue screens on Windows 11."
     })
 
     return rules

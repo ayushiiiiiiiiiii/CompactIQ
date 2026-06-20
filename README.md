@@ -7,7 +7,7 @@ A living, AI-driven platform that converts static enterprise documentation into 
 - **Deep Transitive Conflict Analysis**: Uses NetworkX to detect 2-hop and 3-hop component conflicts.
 - **Mock LLM Document Extraction**: Simulates AI ingestion of unstructured PDF text into structured constraints (with `confidence`, `ambiguous`, `degrades_silently_if_unmet` metadata).
 - **Dynamic Remediation Engine**: Automatically calculates and generates safe `auto-remediate.ps1` PowerShell scripts directly inside the frontend IDE-style terminal.
-- **Silent Degradation Scoring**: Detects components that silently degrade without hard crashing, applying granular point penalties.
+- **Visual Representation (Compatibility Knowledge Graph)**: Users can view a complete topological dependency chain that visually details compliance gaps, conflicts, and upgrade paths.
 
 ## Repository Structure
 ```
