@@ -9,6 +9,7 @@ class Device(Base):
     os_name = Column(String)
     os_version = Column(String)
     last_scanned = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    scan_status = Column(String, default="COMPLETED")
     compliance_score = Column(Integer, default=100)
     components = relationship("DeviceComponent", back_populates="device", cascade="all, delete-orphan")
 
@@ -39,12 +40,5 @@ class Rule(Base):
     incompatible_version = Column(String, nullable=True)
     rule_type = Column(String) # REQUIRES or INCOMPATIBLE_WITH
     reason = Column(Text, nullable=True)
-    
-    # Mock LLM Extractions
-    confidence = Column(Integer, default=100) # Percentage
-    ambiguous = Column(Boolean, default=False)
-    extraction_notes = Column(Text, nullable=True)
-    degrades_silently_if_unmet = Column(Boolean, default=False)
-    
     document_id = Column(Integer, ForeignKey("documents.id"))
     document = relationship("Document")

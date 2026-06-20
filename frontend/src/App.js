@@ -8,6 +8,7 @@ import GraphView from './pages/GraphView';
 import DocumentUpload from './pages/DocumentUpload';
 import LandingPage from './pages/LandingPage';
 import RulesMatrix from './pages/RulesMatrix';
+import ComponentExplorer from './pages/ComponentExplorer';
 import { Sun, Moon, Database, UploadCloud, Monitor, Network, Table } from 'lucide-react';
 import { AppContext } from './context/AppContext';
 import { submitInventory, getCompliance, getGraphElements } from './api';
@@ -107,15 +108,8 @@ const ClientLayout = ({ theme, toggleTheme }) => {
               await new Promise(r => setTimeout(r, 1200));
               
               setComplianceResult(result);
-              
-              try {
-                  const targetDeviceId = result.device_id || "latest";
-                  const graphResult = await getGraphElements(targetDeviceId);
-                  if (graphResult && graphResult.elements) {
-                      setGraphData(graphResult);
-                  }
-              } catch (graphError) {
-                  console.warn("[CompactIQ] Failed to fetch graph elements:", graphError);
+              if (result.graph_elements) {
+                  setGraphData(result.graph_elements);
               }
           } catch (error) {
               console.error("[CompactIQ] Exact Failure Location:", error);
@@ -189,6 +183,7 @@ const ClientLayout = ({ theme, toggleTheme }) => {
         
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <li><Link to="/client/scan" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Monitor size={18} /> My Device Scan</Link></li>
+          <li><Link to="/client/components" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Database size={18} /> Component Explorer</Link></li>
           <li><Link to="/client/graph" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Network size={18} /> Local Graph</Link></li>
         </ul>
         
@@ -228,6 +223,7 @@ function App() {
         
         <Route path="/client" element={<ClientLayout theme={theme} toggleTheme={toggleTheme} />}>
           <Route path="scan" element={<Dashboard />} />
+          <Route path="components" element={<ComponentExplorer />} />
           <Route path="graph" element={<GraphView isGlobal={false} />} />
         </Route>
       </Routes>

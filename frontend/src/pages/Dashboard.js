@@ -81,51 +81,6 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* FEATURE 1: Component Health Explorer */}
-            <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ margin: '0 0 15px 0', color: '#334155', fontSize: '18px' }}>Component Health Explorer</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
-                    {complianceResult.components && complianceResult.components.map((comp, i) => {
-                        const compId = `${comp.type}_${comp.version}`;
-                        const isViolationSource = complianceResult.violations?.find(v => v.source_component === compId);
-                        
-                        let tileStatus = 'Compliant';
-                        if (isViolationSource) {
-                             tileStatus = isViolationSource.severity === 'CRITICAL' ? 'Error' : 'Warning';
-                        }
-                        
-                        const isNodeCompliant = tileStatus === 'Compliant';
-                        const isNodeWarning = tileStatus === 'Warning';
-                        const tileColor = isNodeCompliant ? '#10b981' : isNodeWarning ? '#f59e0b' : '#ef4444';
-                        const tileBg = isNodeCompliant ? '#f0fdf4' : isNodeWarning ? '#fffbeb' : '#fef2f2';
-
-                        return (
-                            <div 
-                                key={i} 
-                                onClick={() => openModalFor(compId)}
-                                style={{ 
-                                    backgroundColor: tileBg, borderRadius: '10px', border: `1px solid ${tileColor}`,
-                                    padding: '15px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                                    transition: 'transform 0.2s, box-shadow 0.2s', borderLeftWidth: '5px'
-                                }}
-                                onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.05)'; }}
-                                onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.02)'; }}
-                            >
-                                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1e293b', marginBottom: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {comp.vendor && comp.vendor !== 'Unknown' ? `${comp.vendor} ${comp.type}` : comp.type}
-                                </div>
-                                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '10px' }}>
-                                    v{comp.version}
-                                </div>
-                                <span style={{ backgroundColor: tileBg, color: tileColor, padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}>
-                                    {tileStatus}
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
             {/* Middle Section: Risks & Graph Snapshot */}
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div className="glass-card" style={{ padding: '25px' }}>
