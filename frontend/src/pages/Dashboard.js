@@ -47,19 +47,19 @@ const Dashboard = () => {
             {/* Score & System Overview */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px', marginBottom: '20px' }}>
                 {/* Score Card */}
-                <div style={{ padding: '25px', backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <h2 style={{ margin: '0 0 10px 0', fontSize: '18px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>Compliance Score</h2>
+                <div className="glass-card" style={{ padding: '25px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <h2 style={{ margin: '0 0 10px 0', fontSize: '18px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Compliance Score</h2>
                     <div style={{ fontSize: '64px', fontWeight: 'bold', color: isCompliant ? '#10b981' : '#f59e0b', lineHeight: '1' }}>
                         {complianceResult.compliance_score}
                     </div>
-                    <div style={{ marginTop: '10px', padding: '6px 16px', borderRadius: '20px', backgroundColor: isCompliant ? '#d1fae5' : '#fee2e2', color: isCompliant ? '#047857' : '#b91c1c', fontWeight: 'bold', fontSize: '14px' }}>
+                    <div style={{ marginTop: '10px', padding: '6px 16px', borderRadius: '20px', backgroundColor: isCompliant ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)', color: isCompliant ? '#10b981' : '#f59e0b', fontWeight: 'bold', fontSize: '14px' }}>
                         {complianceResult.status}
                     </div>
                 </div>
 
                 {/* System Overview Card */}
-                <div style={{ padding: '25px', backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                    <h3 style={{ margin: '0 0 15px 0', color: '#334155', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>System Overview</h3>
+                <div className="glass-card" style={{ padding: '25px' }}>
+                    <h3 style={{ margin: '0 0 15px 0', color: 'var(--text-primary)', borderBottom: '1px solid var(--card-border)', paddingBottom: '10px' }}>System Overview</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                         <div>
                             <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase' }}>Operating System</span>
@@ -97,7 +97,7 @@ const Dashboard = () => {
                                 key={i} 
                                 onClick={() => openModalFor(node.id)}
                                 style={{ 
-                                    backgroundColor: 'white', borderRadius: '10px', border: `1px solid ${tileColor}`,
+                                    backgroundColor: tileBg, borderRadius: '10px', border: `1px solid ${tileColor}`,
                                     padding: '15px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
                                     transition: 'transform 0.2s, box-shadow 0.2s', borderLeftWidth: '5px'
                                 }}
@@ -121,8 +121,8 @@ const Dashboard = () => {
 
             {/* Middle Section: Risks & Graph Snapshot */}
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                <div style={{ padding: '25px', backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                    <h3 style={{ margin: '0 0 15px 0', color: '#334155', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
+                <div className="glass-card" style={{ padding: '25px' }}>
+                    <h3 style={{ margin: '0 0 15px 0', color: 'var(--text-primary)', borderBottom: '1px solid var(--card-border)', paddingBottom: '10px' }}>
                         Compliance Explanation Engine 
                         <span style={{ marginLeft: '10px', backgroundColor: complianceResult.violations_count > 0 ? '#ef4444' : '#10b981', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '12px' }}>
                             {complianceResult.violations_count} detected
@@ -156,9 +156,9 @@ const Dashboard = () => {
                 </div>
 
                 {/* Graph Snapshot */}
-                <div style={{ padding: '25px', backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px', marginBottom: '15px' }}>
-                        <h3 style={{ margin: 0, color: '#334155' }}>Knowledge Graph</h3>
+                <div className="glass-card" style={{ padding: '25px', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--card-border)', paddingBottom: '10px', marginBottom: '15px' }}>
+                        <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Knowledge Graph</h3>
                         <Link to="/graph" style={{ fontSize: '12px', color: '#0076CE', textDecoration: 'none', fontWeight: '500', backgroundColor: '#f0f9ff', padding: '4px 10px', borderRadius: '12px' }}>Explore &rarr;</Link>
                     </div>
                     <div style={{ flex: 1, backgroundColor: '#f8fafc', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', minHeight: '300px', position: 'relative' }}>

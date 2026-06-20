@@ -32,16 +32,16 @@ const ComponentModal = () => {
             display: 'flex', justifyContent: 'center', alignItems: 'center',
             zIndex: 9999, animation: 'fadeIn 0.2s ease-in'
         }}>
-            <div style={{
-                backgroundColor: 'white', width: '600px', maxWidth: '90%', maxHeight: '85vh',
+            <div className="glass-card" style={{
+                width: '600px', maxWidth: '90%', maxHeight: '85vh',
                 borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
             }}>
                 {/* Header */}
-                <div style={{ padding: '20px', borderBottom: `4px solid ${badgeColor}`, backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ padding: '20px', borderBottom: `4px solid ${badgeColor}`, backgroundColor: 'var(--terminal-header)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
-                            <h2 style={{ margin: 0, color: '#0f172a', fontSize: '24px' }}>{node.componentName || selectedComponent.id}</h2>
+                            <h2 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '24px' }}>{node.componentName || selectedComponent.id}</h2>
                             <span style={{ backgroundColor: badgeBg, color: badgeColor, padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' }}>
                                 {node.status}
                             </span>
@@ -61,10 +61,10 @@ const ComponentModal = () => {
                     
                     {violations.length > 0 ? (
                         <div style={{ marginBottom: '20px' }}>
-                            <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: '#1e293b', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>Detected Conflicts & Violations</h3>
+                            <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: 'var(--text-primary)', borderBottom: '1px solid var(--card-border)', paddingBottom: '8px' }}>Detected Conflicts & Violations</h3>
                             {violations.map((v, idx) => (
-                                <div key={idx} style={{ marginBottom: '15px', backgroundColor: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '15px' }}>
-                                    <h4 style={{ margin: '0 0 8px 0', color: '#b91c1c', fontSize: '15px', display: 'flex', justifyContent: 'space-between' }}>
+                                <div key={idx} style={{ marginBottom: '15px', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid #fee2e2', borderRadius: '8px', padding: '15px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', color: '#ef4444', fontSize: '15px', display: 'flex', justifyContent: 'space-between' }}>
                                         {v.what_failed || v.root_cause_explanation}
                                         <span style={{ fontSize: '12px', backgroundColor: '#ef4444', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>{v.severity} Risk</span>
                                     </h4>
@@ -74,13 +74,13 @@ const ComponentModal = () => {
                                     </div>
                                     
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px' }}>
-                                        <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #fecaca' }}>
-                                            <strong style={{ color: '#991b1b', display: 'block', marginBottom: '4px' }}>Business Impact</strong>
-                                            <span style={{ color: '#475569' }}>{v.business_impact || 'Degraded performance or security.'}</span>
+                                        <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '6px', border: '1px solid #fecaca' }}>
+                                            <strong style={{ color: '#ef4444', display: 'block', marginBottom: '4px' }}>Business Impact</strong>
+                                            <span style={{ color: 'var(--text-secondary)' }}>{v.business_impact || 'Degraded performance or security.'}</span>
                                         </div>
-                                        <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #fecaca' }}>
-                                            <strong style={{ color: '#991b1b', display: 'block', marginBottom: '4px' }}>Required Fix</strong>
-                                            <span style={{ color: '#475569' }}>{v.recommended_action || 'Update component.'}</span>
+                                        <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '6px', border: '1px solid #fecaca' }}>
+                                            <strong style={{ color: '#ef4444', display: 'block', marginBottom: '4px' }}>Required Fix</strong>
+                                            <span style={{ color: 'var(--text-secondary)' }}>{v.recommended_action || 'Update component.'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -96,7 +96,7 @@ const ComponentModal = () => {
                 </div>
 
                 {/* Footer */}
-                <div style={{ padding: '15px 20px', backgroundColor: '#f8fafc', borderTop: '1px solid #e2e8f0', textAlign: 'right' }}>
+                <div style={{ padding: '15px 20px', backgroundColor: 'var(--terminal-header)', borderTop: '1px solid var(--card-border)', textAlign: 'right' }}>
                     <button 
                         onClick={() => setIsModalOpen(false)}
                         style={{ backgroundColor: '#0076CE', color: 'white', border: 'none', padding: '8px 24px', borderRadius: '6px', fontWeight: '500', cursor: 'pointer' }}
