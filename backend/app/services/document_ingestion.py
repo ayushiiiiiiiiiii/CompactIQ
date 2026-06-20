@@ -80,7 +80,7 @@ def parse_document(filepath: str) -> str:
 
 async def extract_rules_from_text(text: str) -> List[Dict[str, Any]]:
     """Heuristic rule extractor for hackathon, simulating LLM parser output."""
-    file_path = os.path.join(os.path.dirname(__file__), "../../../../../files/extracted_rules_reference.json")
+    file_path = os.path.join(os.path.dirname(__file__), "../../../../files/extracted_rules_reference.json")
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)

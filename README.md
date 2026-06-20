@@ -1,7 +1,13 @@
 # Dynamic Compatibility & Configuration Compliance Engine
 
 ## Overview
-A living, AI-driven platform that converts static enterprise documentation into a machine-readable knowledge graph for continuous compliance validation.
+A living, AI-driven platform that converts static enterprise documentation into a machine-readable knowledge graph for continuous compliance validation. It includes full support for multi-hop transitive conflicts, AI-based rule extraction semantics, silent degradation detection, and auto-generated PowerShell remediation scripts.
+
+## Advanced Features Added
+- **Deep Transitive Conflict Analysis**: Uses NetworkX to detect 2-hop and 3-hop component conflicts.
+- **Mock LLM Document Extraction**: Simulates AI ingestion of unstructured PDF text into structured constraints (with `confidence`, `ambiguous`, `degrades_silently_if_unmet` metadata).
+- **Dynamic Remediation Engine**: Automatically calculates and generates safe `auto-remediate.ps1` PowerShell scripts directly inside the frontend IDE-style terminal.
+- **Silent Degradation Scoring**: Detects components that silently degrade without hard crashing, applying granular point penalties.
 
 ## Repository Structure
 ```
