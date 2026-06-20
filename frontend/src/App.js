@@ -10,7 +10,7 @@ import LandingPage from './pages/LandingPage';
 import RulesMatrix from './pages/RulesMatrix';
 import { Sun, Moon, Database, UploadCloud, Monitor, Network, Table } from 'lucide-react';
 import { AppContext } from './context/AppContext';
-import { submitInventory, getCompliance } from './api';
+import { submitInventory, getCompliance, getGraphElements } from './api';
 
 const LOADING_PHASES = [
     "Initializing CompactIQ Enterprise...",
@@ -107,8 +107,15 @@ const ClientLayout = ({ theme, toggleTheme }) => {
               await new Promise(r => setTimeout(r, 1200));
               
               setComplianceResult(result);
-              if (result && result.graph_elements) {
-                  setGraphData(result.graph_elements);
+              
+              try {
+                  const targetDeviceId = result.device_id || "latest";
+                  const graphResult = await getGraphElements(targetDeviceId);
+                  if (graphResult && graphResult.elements) {
+                      setGraphData(graphResult);
+                  }
+              } catch (graphError) {
+                  console.warn("[CompactIQ] Failed to fetch graph elements:", graphError);
               }
           } catch (error) {
               console.error("[CompactIQ] Exact Failure Location:", error);
