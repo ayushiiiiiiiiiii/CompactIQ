@@ -1,162 +1,208 @@
-import React, { useState, useEffect } from 'react';
-import { submitInventory, getCompliance } from '../api';
-import { ShieldAlert, CheckCircle, Monitor, ShieldCheck, Cpu } from 'lucide-react';
+import React, { useContext } from 'react';
+import { AppContext } from '../context/AppContext';
+import ReactFlow, { Background, Controls } from 'react-flow-renderer';
+import { Link } from 'react-router-dom';
+import ComponentModal from '../components/ComponentModal';
 
 const Dashboard = () => {
-    const [compliance, setCompliance] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const { complianceResult, graphData, setSelectedComponent, setIsModalOpen } = useContext(AppContext);
 
-    useEffect(() => {
-        // Wait for explicit scan
-    }, []);
+    if (!complianceResult) {
+        return <div style={{ padding: '20px' }}>No scan data available.</div>;
+    }
 
-    const scanAndSubmit = async () => {
-        setLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        try {
-            if (window.electron && window.electron.scanSystem) {
-                const inventory = await window.electron.scanSystem();
-                const deviceId = inventory.os.hostname || "UNKNOWN-DEVICE";
-                const result = await submitInventory(deviceId, inventory.os, inventory.components);
-                localStorage.setItem('scannedDeviceId', deviceId);
-                setCompliance(result);
-            } else {
-                try {
-                    const result = await getCompliance("latest");
-                    setCompliance(result);
-                } catch (err) {
-                    alert("Please run this app from the Electron desktop client to perform actual system scanning. No previous scan found in DB.");
-                }
-            }
-        } catch (error) {
-            console.error("Scan failed", error);
+    let nodes = [];
+    let edges = [];
+    if (graphData && graphData.elements) {
+        nodes = graphData.elements.filter(el => !el.source && !el.target);
+        edges = graphData.elements.filter(el => el.source && el.target);
+    }
+
+    const isCompliant = complianceResult.status === 'COMPLIANT';
+
+    // Helper for Explorer Tiles
+    const openModalFor = (nodeId) => {
+        const node = nodes.find(n => n.id === nodeId);
+        if (node) {
+            setSelectedComponent(node);
+            setIsModalOpen(true);
+        } else {
+            // Fallback if node not in graph
+            setSelectedComponent({ id: nodeId, data: { label: nodeId, status: 'Unknown' } });
+            setIsModalOpen(true);
         }
-        setLoading(false);
     };
 
     return (
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                <div>
-                    <h1 style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: '700' }}>Endpoint Dashboard</h1>
-                    <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Real-time hardware & software compliance validation.</p>
+        <div style={{ animation: 'fadeIn 0.5s ease-in' }}>
+            <ComponentModal />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>
+                <h1 style={{ margin: 0, color: '#1e293b' }}>Endpoint Overview</h1>
+                <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '14px', color: '#64748b' }}>Last Scan: <strong style={{ color: '#334155' }}>{complianceResult.last_scanned ? new Date(complianceResult.last_scanned).toLocaleString() : 'Just now'}</strong></div>
+                    <div style={{ fontSize: '14px', color: '#64748b' }}>Scan Status: <strong style={{ color: '#0076CE' }}>{complianceResult.scan_status || 'COMPLETED'}</strong></div>
                 </div>
-                <button 
-                    onClick={scanAndSubmit} 
-                    disabled={loading}
-                    className="btn-primary"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                    <Monitor size={18} />
-                    {loading ? "Scanning Environment..." : "Run Validation Check"}
-                </button>
             </div>
 
-            {compliance && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', animation: 'fadeIn 0.5s ease' }}>
-                    {/* Score Overview */}
-                    <div className="glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px' }}>
+            {/* Score & System Overview */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px', marginBottom: '20px' }}>
+                {/* Score Card */}
+                <div style={{ padding: '25px', backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <h2 style={{ margin: '0 0 10px 0', fontSize: '18px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>Compliance Score</h2>
+                    <div style={{ fontSize: '64px', fontWeight: 'bold', color: isCompliant ? '#10b981' : '#f59e0b', lineHeight: '1' }}>
+                        {complianceResult.compliance_score}
+                    </div>
+                    <div style={{ marginTop: '10px', padding: '6px 16px', borderRadius: '20px', backgroundColor: isCompliant ? '#d1fae5' : '#fee2e2', color: isCompliant ? '#047857' : '#b91c1c', fontWeight: 'bold', fontSize: '14px' }}>
+                        {complianceResult.status}
+                    </div>
+                </div>
+
+                {/* System Overview Card */}
+                <div style={{ padding: '25px', backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                    <h3 style={{ margin: '0 0 15px 0', color: '#334155', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>System Overview</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                         <div>
-                            <h2 style={{ margin: '0 0 12px 0', fontSize: '18px', color: 'var(--text-secondary)' }}>Overall Compliance Score</h2>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
-                                <span style={{ fontSize: '48px', fontWeight: '800', color: compliance.status === 'COMPLIANT' ? 'var(--success-text)' : 'var(--error-text)' }}>
-                                    {compliance.compliance_score}
-                                </span>
-                                <span style={{ fontSize: '18px', color: 'var(--text-secondary)' }}>/ 100</span>
-                            </div>
+                            <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase' }}>Operating System</span>
+                            <div style={{ fontSize: '16px', color: '#0f172a', fontWeight: '500' }}>{complianceResult.os_name || 'Unknown'}</div>
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '30px', backgroundColor: compliance.status === 'COMPLIANT' ? 'var(--success-bg)' : 'var(--error-bg)', color: compliance.status === 'COMPLIANT' ? 'var(--success-text)' : 'var(--error-text)', border: `1px solid ${compliance.status === 'COMPLIANT' ? 'var(--success-border)' : 'var(--error-border)'}` }}>
-                                {compliance.status === 'COMPLIANT' ? <ShieldCheck size={20} /> : <ShieldAlert size={20} />}
-                                <span style={{ fontWeight: '600', letterSpacing: '0.5px' }}>{compliance.status}</span>
-                            </div>
+                        <div>
+                            <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase' }}>OS Version</span>
+                            <div style={{ fontSize: '16px', color: '#0f172a', fontWeight: '500' }}>{complianceResult.os_version || 'Unknown'}</div>
+                        </div>
+                        <div>
+                            <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase' }}>Device ID</span>
+                            <div style={{ fontSize: '16px', color: '#0f172a', fontWeight: '500' }}>{complianceResult.device_id}</div>
+                        </div>
+                        <div>
+                            <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase' }}>Tracked Components</span>
+                            <div style={{ fontSize: '16px', color: '#0f172a', fontWeight: '500' }}>{complianceResult.components ? complianceResult.components.length : 0} components</div>
                         </div>
                     </div>
-                    
-                    {/* System Inventory */}
-                    {compliance.os_name && (
-                        <div className="glass-card">
-                            <h3 style={{ margin: '0 0 20px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Cpu size={20} color="var(--text-secondary)" /> 
-                                Scanned System Inventory
-                            </h3>
-                            <div style={{ padding: '16px', background: 'var(--bg-color)', borderRadius: '8px', marginBottom: '20px', border: '1px solid var(--card-border)' }}>
-                                <strong>Operating System:</strong> {compliance.os_name} (Version: {compliance.os_version})
-                            </div>
-                            
-                            {compliance.components && compliance.components.length > 0 && (
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-                                    {compliance.components.map((comp, idx) => (
-                                        <div key={idx} style={{ padding: '16px', border: '1px solid var(--card-border)', borderRadius: '8px', backgroundColor: 'var(--bg-color)' }}>
-                                            <strong style={{ color: 'var(--info-text)', fontSize: '16px', display: 'block', marginBottom: '8px' }}>{comp.type}</strong>
-                                            <div style={{ fontSize: '14px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Vendor:</span> <span style={{ color: 'var(--text-primary)' }}>{comp.vendor}</span></div>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Version:</span> <span style={{ color: 'var(--text-primary)' }}>{comp.version}</span></div>
-                                            </div>
-                                        </div>
-                                    ))}
+                </div>
+            </div>
+
+            {/* FEATURE 1: Component Health Explorer */}
+            <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#334155', fontSize: '18px' }}>Component Health Explorer</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
+                    {nodes.filter(n => n.id !== 'endpoint-device').map((node, i) => {
+                        const isNodeCompliant = node.data.status === 'Compliant';
+                        const isNodeWarning = node.data.status === 'Warning';
+                        const isNodeMissing = node.data.status === 'Missing';
+                        const tileColor = isNodeCompliant ? '#10b981' : isNodeWarning ? '#f59e0b' : isNodeMissing ? '#64748b' : '#ef4444';
+                        const tileBg = isNodeCompliant ? '#f0fdf4' : isNodeWarning ? '#fffbeb' : isNodeMissing ? '#f8fafc' : '#fef2f2';
+
+                        return (
+                            <div 
+                                key={i} 
+                                onClick={() => openModalFor(node.id)}
+                                style={{ 
+                                    backgroundColor: 'white', borderRadius: '10px', border: `1px solid ${tileColor}`,
+                                    padding: '15px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                                    transition: 'transform 0.2s, box-shadow 0.2s', borderLeftWidth: '5px'
+                                }}
+                                onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.05)'; }}
+                                onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.02)'; }}
+                            >
+                                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1e293b', marginBottom: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {node.data.componentName || node.id}
                                 </div>
-                            )}
-                        </div>
-                    )}
-                    
-                    {/* Violations & Remediation */}
-                    {compliance.violations_count > 0 ? (
-                        <div className="glass-card">
-                            <h3 style={{ margin: '0 0 20px 0', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--error-text)' }}>
-                                <ShieldAlert size={20} />
-                                Active Violations ({compliance.violations_count})
-                            </h3>
-                            
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
-                                {compliance.violations.map((v, i) => (
-                                    <div key={i} style={{ borderLeft: '4px solid var(--error-border)', padding: '16px', backgroundColor: 'var(--error-bg)', borderRadius: '0 8px 8px 0' }}>
-                                        <strong style={{ color: 'var(--error-text)', fontSize: '16px', display: 'block', marginBottom: '8px' }}>{v.source_component} ⚡ {v.target_component}</strong>
-                                        <p style={{ margin: '0 0 8px 0', color: 'var(--text-primary)', lineHeight: '1.5' }}>{v.root_cause_explanation}</p>
-                                        <small style={{ color: 'var(--text-secondary)' }}>Source: {v.source_document}</small>
-                                    </div>
-                                ))}
+                                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '10px' }}>
+                                    v{node.data.version || 'Unknown'}
+                                </div>
+                                <span style={{ backgroundColor: tileBg, color: tileColor, padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}>
+                                    {node.data.status}
+                                </span>
                             </div>
-                            
-                            {compliance.remediation && (
-                                <div style={{ padding: '24px', backgroundColor: 'var(--info-bg)', borderRadius: '8px', borderLeft: '4px solid var(--info-border)' }}>
-                                    <h4 style={{ color: 'var(--info-text)', margin: '0 0 12px 0', fontSize: '18px' }}>Recommended Safe Remediation</h4>
-                                    <p style={{ fontWeight: '500', color: 'var(--text-primary)', marginBottom: '20px' }}>{compliance.remediation.recommended_action}</p>
-                                    
-                                    <div style={{ borderRadius: '8px', overflow: 'hidden', backgroundColor: 'var(--terminal-bg)', border: '1px solid var(--card-border)', boxShadow: 'var(--shadow)' }}>
-                                        <div style={{ backgroundColor: 'var(--terminal-header)', padding: '10px 16px', borderBottom: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ff5f56' }}></div>
-                                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ffbd2e' }}></div>
-                                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#27c93f' }}></div>
-                                            <span style={{ marginLeft: '12px', fontSize: '13px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>auto-remediate.ps1</span>
-                                        </div>
-                                        <pre style={{ margin: 0, padding: '20px', color: 'var(--terminal-text)', fontSize: '14px', lineHeight: '1.6', overflowX: 'auto' }}>
-                                            {compliance.remediation.simulated_script?.split('\n').map((line, i) => {
-                                                const isComment = line.trim().startsWith('#');
-                                                const isCommand = line.includes('Write-Host') || line.includes('Invoke-WebRequest') || line.includes('Start-Process');
-                                                return (
-                                                    <div key={i} style={{ display: 'flex' }}>
-                                                        <span style={{ width: '32px', color: 'var(--text-secondary)', textAlign: 'right', paddingRight: '16px', userSelect: 'none', borderRight: '1px solid var(--card-border)', marginRight: '16px' }}>{i + 1}</span>
-                                                        <span style={{ color: isComment ? '#8b949e' : isCommand ? '#38bdf8' : 'var(--terminal-text)', fontStyle: isComment ? 'italic' : 'normal', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                                                            {line}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </pre>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Middle Section: Risks & Graph Snapshot */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                <div style={{ padding: '25px', backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                    <h3 style={{ margin: '0 0 15px 0', color: '#334155', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
+                        Compliance Explanation Engine 
+                        <span style={{ marginLeft: '10px', backgroundColor: complianceResult.violations_count > 0 ? '#ef4444' : '#10b981', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '12px' }}>
+                            {complianceResult.violations_count} detected
+                        </span>
+                    </h3>
+                    
+                    {complianceResult.violations_count > 0 ? (
+                        <div>
+                            {complianceResult.violations.map((v, i) => (
+                                <div key={i} style={{ border: '1px solid #fee2e2', padding: '15px', backgroundColor: '#fff', margin: '15px 0', borderRadius: '8px', borderLeft: '4px solid #ef4444' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                                        <span style={{ backgroundColor: '#ef4444', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', marginRight: '10px' }}>{v.severity || "CRITICAL"}</span>
+                                        <strong style={{ fontSize: '16px', color: '#7f1d1d' }}>{v.what_failed || v.root_cause_explanation}</strong>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', fontSize: '14px', color: '#475569', marginBottom: '10px' }}>
+                                        <div><strong style={{color: '#334155'}}>Cause:</strong> {v.why_failed || v.root_cause_explanation}</div>
+                                        <div><strong style={{color: '#334155'}}>Affected Components:</strong> {(v.affected_components || [v.source_component, v.target_component]).join(", ")}</div>
+                                        <div><strong style={{color: '#334155'}}>Business Impact:</strong> {v.business_impact || 'Degraded Performance'}</div>
+                                    </div>
+                                    <div style={{ backgroundColor: '#f0f9ff', padding: '10px', borderRadius: '6px', border: '1px solid #bae6fd', fontSize: '14px' }}>
+                                        <strong style={{color: '#0369a1'}}>Recommended Resolution:</strong> <span style={{color: '#0c4a6e'}}>{v.recommended_action || "Update component."}</span>
                                     </div>
                                 </div>
-                            )}
+                            ))}
                         </div>
                     ) : (
-                        <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '24px', backgroundColor: 'var(--success-bg)', borderLeft: '4px solid var(--success-border)' }}>
-                            <CheckCircle size={32} color="var(--success-text)" />
-                            <div>
-                                <h3 style={{ margin: '0 0 4px 0', color: 'var(--success-text)' }}>System is fully compliant!</h3>
-                                <p style={{ margin: 0, color: 'var(--text-secondary)' }}>No vulnerabilities or incompatibilities detected across the dependency graph.</p>
-                            </div>
+                        <div style={{ padding: '20px', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px dashed #bbf7d0', textAlign: 'center', color: '#166534' }}>
+                            No compatibility risks or policy violations detected. System is healthy.
                         </div>
                     )}
+                </div>
+
+                {/* Graph Snapshot */}
+                <div style={{ padding: '25px', backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px', marginBottom: '15px' }}>
+                        <h3 style={{ margin: 0, color: '#334155' }}>Knowledge Graph</h3>
+                        <Link to="/graph" style={{ fontSize: '12px', color: '#0076CE', textDecoration: 'none', fontWeight: '500', backgroundColor: '#f0f9ff', padding: '4px 10px', borderRadius: '12px' }}>Explore &rarr;</Link>
+                    </div>
+                    <div style={{ flex: 1, backgroundColor: '#f8fafc', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', minHeight: '300px', position: 'relative' }}>
+                        {nodes.length > 0 ? (
+                            <ReactFlow 
+                                nodes={nodes} 
+                                edges={edges} 
+                                fitView 
+                                style={{ width: '100%', height: '100%' }}
+                                onNodeClick={(e, node) => openModalFor(node.id)}
+                            >
+                                <Background color="#cbd5e1" gap={12} size={1} />
+                            </ReactFlow>
+                        ) : (
+                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#94a3b8', fontSize: '14px' }}>Graph data unavailable</div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* FEATURE 3: Remediation Roadmap Panel */}
+            {complianceResult.remediation && complianceResult.remediation.roadmap && (
+                <div style={{ padding: '25px', backgroundColor: '#0f172a', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', color: 'white', marginBottom: '40px' }}>
+                    <h3 style={{ margin: '0 0 20px 0', color: '#f8fafc', borderBottom: '1px solid #334155', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '20px' }}>🛠</span> Recommended Resolution Path
+                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', overflowX: 'auto', paddingBottom: '15px' }}>
+                        {complianceResult.remediation.roadmap.map((step, idx) => (
+                            <React.Fragment key={idx}>
+                                <div style={{ 
+                                    minWidth: '200px', backgroundColor: '#1e293b', border: '1px solid #334155', 
+                                    borderRadius: '8px', padding: '15px', position: 'relative'
+                                }}>
+                                    <div style={{ position: 'absolute', top: '-10px', left: '15px', backgroundColor: '#0076CE', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                                        Step {idx + 1}
+                                    </div>
+                                    <p style={{ margin: '10px 0 0 0', fontSize: '14px', color: '#cbd5e1', lineHeight: '1.4' }}>{step}</p>
+                                </div>
+                                {idx < complianceResult.remediation.roadmap.length - 1 && (
+                                    <div style={{ color: '#0076CE', fontSize: '24px', margin: '0 15px' }}>&rarr;</div>
+                                )}
+                            </React.Fragment>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

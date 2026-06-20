@@ -1,111 +1,96 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 import ReactFlow, { Background, Controls } from 'react-flow-renderer';
-import { getGraphElements } from '../api';
-import { Network } from 'lucide-react';
+import { AppContext } from '../context/AppContext';
+import ComponentModal from '../components/ComponentModal';
+import { Link } from 'react-router-dom';
 
-const GraphView = ({ isGlobal }) => {
-    const [nodes, setNodes] = useState([]);
-    const [edges, setEdges] = useState([]);
-    const [loading, setLoading] = useState(true);
+const GraphView = () => {
+    const { graphData, setSelectedComponent, setIsModalOpen } = useContext(AppContext);
 
-    const mockElements = [
-        { id: 'endpoint-device', type: 'input', data: { label: 'Endpoint (DEVICE-XYZ-123)' }, position: { x: 250, y: 50 }, style: { background: 'var(--button-bg)', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 20px', fontWeight: '600' } },
-        { id: 'SecurityAgent_7.17', data: { label: 'Security Agent v7.17' }, position: { x: 100, y: 180 }, style: { background: 'var(--bg-color)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '10px' } },
-        { id: 'Intel_NIC_22.0', data: { label: 'Intel NIC v22.0' }, position: { x: 380, y: 180 }, style: { border: '2px solid var(--error-border)', background: 'var(--error-bg)', color: 'var(--error-text)', borderRadius: '8px', padding: '10px', fontWeight: '500' } },
-        { id: 'edge-endpoint-SecurityAgent_7.17', source: 'endpoint-device', target: 'SecurityAgent_7.17', label: 'HAS_COMPONENT' },
-        { id: 'edge-endpoint-Intel_NIC_22.0', source: 'endpoint-device', target: 'Intel_NIC_22.0', label: 'HAS_COMPONENT' },
-        { id: 'edge-rel-incompatibility', source: 'SecurityAgent_7.17', target: 'Intel_NIC_22.0', label: 'INCOMPATIBLE', style: { stroke: 'var(--error-border)', strokeWidth: 2 }, animated: true },
-    ];
-
-    useEffect(() => {
-        const fetchGraph = async () => {
-            try {
-                let deviceId = null;
-                
-                if (!isGlobal) {
-                    deviceId = localStorage.getItem('scannedDeviceId');
-                    if (!deviceId) {
-                        console.log("No device scanned yet. Cannot load local graph.");
-                        setNodes([]);
-                        setEdges([]);
-                        setLoading(false);
-                        return;
-                    }
-                }
-
-                const data = await getGraphElements(deviceId);
-                let graphElements = [];
-                if (data && data.elements && data.elements.length > 0) {
-                    graphElements = data.elements;
-                } else {
-                    graphElements = mockElements;
-                }
-                
-                const initialNodes = graphElements.filter(el => !el.source && !el.target);
-                const initialEdges = graphElements.filter(el => el.source && el.target);
-                
-                setNodes(initialNodes);
-                setEdges(initialEdges);
-            } catch (error) {
-                console.error("Failed to fetch graph from API, using mock elements", error);
-                const initialNodes = mockElements.filter(el => !el.source && !el.target);
-                const initialEdges = mockElements.filter(el => el.source && el.target);
-                setNodes(initialNodes);
-                setEdges(initialEdges);
-            }
-            setLoading(false);
-        };
-        fetchGraph();
-    }, []);
-
-    if (loading) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '3px solid var(--card-border)', borderTopColor: 'var(--button-bg)', animation: 'spin 1s linear infinite' }}></div>
-                <div style={{ color: 'var(--text-secondary)' }}>Loading Knowledge Graph...</div>
-                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-            </div>
-        );
+    if (!graphData || !graphData.elements) {
+        return <div style={{ padding: '20px', color: '#64748b' }}>No graph data available. Please ensure the scan has completed.</div>;
     }
 
+    const initialNodes = graphData.elements.filter(el => !el.source && !el.target);
+    const initialEdges = graphData.elements.filter(el => el.source && el.target);
+
+    const openModalFor = (nodeId) => {
+        const node = initialNodes.find(n => n.id === nodeId);
+        if (node) {
+            setSelectedComponent(node);
+            setIsModalOpen(true);
+        }
+    };
+
     return (
-        <div style={{ maxWidth: '1200px', margin: '0 auto', height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ marginBottom: '24px' }}>
-                <h1 style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <Network size={28} color={isGlobal ? "#3b82f6" : "#10b981"} />
-                    {isGlobal ? "Global Knowledge Graph" : "Device Dependency Graph"}
-                </h1>
-                <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-                    {isGlobal ? "Visual representation of all enterprise constraints, requirements, and hardware rules." : "Visual representation of all endpoint constraints, requirements, and hardware collisions."}
-                </p>
-            </div>
+        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', animation: 'fadeIn 0.5s ease-in' }}>
+            <ComponentModal />
             
-            <div className="glass-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--card-border)', backgroundColor: 'var(--bg-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', gap: '16px' }}>
-                        <span><strong>Nodes:</strong> {nodes.length}</span>
-                        <span><strong>Edges:</strong> {edges.length}</span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '12px', fontSize: '12px' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--error-bg)', border: '1px solid var(--error-border)' }}></div> Conflict</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--bg-color)', border: '1px solid var(--card-border)' }}></div> Valid Component</span>
-                    </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>
+                <div>
+                    <h1 style={{ margin: '0 0 5px 0', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <Link to="/" style={{ color: '#0076CE', textDecoration: 'none', fontSize: '16px' }}>&larr; Back to Dashboard</Link>
+                        Knowledge Graph Explorer
+                    </h1>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Visualizing active components and their dependencies.</p>
                 </div>
-                
-                <div style={{ flex: 1, position: 'relative', background: 'var(--bg-color)', width: '100%', height: '100%' }}>
-                    {nodes.length > 0 ? (
-                        <ReactFlow nodes={nodes} edges={edges} style={{ width: '100%', height: '100%' }} fitView minZoom={0.1} maxZoom={2}>
-                            <Background color="var(--text-secondary)" gap={16} size={1} />
-                            <Controls style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', overflow: 'hidden', boxShadow: 'var(--shadow)' }} />
-                        </ReactFlow>
-                    ) : (
-                        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                            {!isGlobal && !localStorage.getItem('scannedDeviceId')
-                                ? "Please run a device validation scan from the Dashboard to map your local dependency graph."
-                                : "No graph nodes found to display."}
+                <div style={{ fontSize: '13px', color: '#94a3b8', backgroundColor: '#f8fafc', padding: '5px 10px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                    <strong>{initialNodes.length}</strong> Nodes | <strong>{initialEdges.length}</strong> Edges
+                </div>
+            </div>
+
+            <div style={{ flex: 1, backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'hidden', position: 'relative' }}>
+                <ReactFlow 
+                    nodes={initialNodes} 
+                    edges={initialEdges} 
+                    fitView 
+                    style={{ width: '100%', height: '100%' }}
+                    onNodeClick={(e, node) => openModalFor(node.id)}
+                >
+                    <Background color="#cbd5e1" gap={16} />
+                    <Controls />
+                    
+                    {/* Legend Panel */}
+                    <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10, backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', fontSize: '12px' }}>
+                        <strong style={{ color: '#1e293b', display: 'block', marginBottom: '10px' }}>Graph Legend</strong>
+                        
+                        <div style={{ marginBottom: '15px' }}>
+                            <div style={{ color: '#475569', marginBottom: '5px', fontWeight: 'bold' }}>Component Health</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: '12px', height: '12px', backgroundColor: '#f0fdf4', border: '2px solid #10b981', borderRadius: '2px' }}></div>
+                                <span style={{ color: '#334155' }}>Healthy / Compliant</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: '12px', height: '12px', backgroundColor: '#fffbeb', border: '2px solid #f59e0b', borderRadius: '2px' }}></div>
+                                <span style={{ color: '#334155' }}>Warning / Needs Attention</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: '12px', height: '12px', backgroundColor: '#fef2f2', border: '2px solid #ef4444', borderRadius: '2px' }}></div>
+                                <span style={{ color: '#334155' }}>Violation Present</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{ width: '12px', height: '12px', backgroundColor: '#fff', border: '2px dashed #f59e0b', borderRadius: '2px' }}></div>
+                                <span style={{ color: '#334155' }}>Missing Required Component</span>
+                            </div>
                         </div>
-                    )}
-                </div>
+
+                        <div>
+                            <div style={{ color: '#475569', marginBottom: '5px', fontWeight: 'bold' }}>Edge Relationships</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: '20px', height: '2px', backgroundColor: '#cbd5e1' }}></div>
+                                <span style={{ color: '#334155' }}>HAS_COMPONENT</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <div style={{ width: '20px', height: '2px', backgroundColor: '#f59e0b' }}></div>
+                                <span style={{ color: '#334155' }}>REQUIRES / DEPENDS_ON</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{ width: '20px', height: '2px', backgroundColor: '#ef4444' }}></div>
+                                <span style={{ color: '#334155' }}>INCOMPATIBLE / CONFLICTS</span>
+                            </div>
+                        </div>
+                    </div>
+                </ReactFlow>
             </div>
         </div>
     );
