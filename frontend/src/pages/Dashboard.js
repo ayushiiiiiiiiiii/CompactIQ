@@ -88,12 +88,32 @@ const Dashboard = () => {
                                 ))}
                                 
                                 {compliance.remediation && (
-                                    <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f0f9ff', borderRadius: '4px' }}>
-                                        <h4>Recommended Safe Remediation</h4>
-                                        <p>{compliance.remediation.recommended_action}</p>
-                                        <pre style={{ backgroundColor: '#2d3748', color: '#a0aec0', padding: '10px' }}>
-                                            {compliance.remediation.simulated_script}
-                                        </pre>
+                                    <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f0f9ff', borderRadius: '4px', borderLeft: '4px solid #0ea5e9' }}>
+                                        <h4 style={{ color: '#0369a1', marginBottom: '10px' }}>Recommended Safe Remediation</h4>
+                                        <p style={{ fontWeight: '500', color: '#0f172a', marginBottom: '15px' }}>{compliance.remediation.recommended_action}</p>
+                                        
+                                        <div style={{ borderRadius: '8px', overflow: 'hidden', backgroundColor: '#0d1117', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
+                                            <div style={{ backgroundColor: '#161b22', padding: '8px 12px', borderBottom: '1px solid #30363d', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ff5f56' }}></div>
+                                                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ffbd2e' }}></div>
+                                                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#27c93f' }}></div>
+                                                <span style={{ marginLeft: '10px', fontSize: '12px', color: '#8b949e', fontFamily: 'monospace' }}>auto-remediate.ps1</span>
+                                            </div>
+                                            <pre style={{ margin: 0, padding: '16px', color: '#c9d1d9', fontSize: '13px', lineHeight: '1.5', overflowX: 'auto' }}>
+                                                {compliance.remediation.simulated_script.split('\n').map((line, i) => {
+                                                    const isComment = line.trim().startsWith('#');
+                                                    const isCommand = line.includes('Write-Host') || line.includes('Invoke-WebRequest') || line.includes('Start-Process');
+                                                    return (
+                                                        <div key={i} style={{ display: 'flex' }}>
+                                                            <span style={{ width: '24px', color: '#484f58', textAlign: 'right', paddingRight: '12px', userSelect: 'none', borderRight: '1px solid #30363d', marginRight: '12px' }}>{i + 1}</span>
+                                                            <span style={{ color: isComment ? '#8b949e' : isCommand ? '#79c0ff' : '#c9d1d9', fontStyle: isComment ? 'italic' : 'normal', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                                                                {line}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </pre>
+                                        </div>
                                     </div>
                                 )}
                             </div>
