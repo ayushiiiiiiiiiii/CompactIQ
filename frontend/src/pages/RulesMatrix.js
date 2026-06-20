@@ -97,11 +97,11 @@ const RulesMatrix = () => {
             </div>
             
             <style>
-                {\`
+                {`
                 tr:hover {
                     background-color: rgba(255, 255, 255, 0.03);
                 }
-                \`}
+                `}
             </style>
         </div>
     );
