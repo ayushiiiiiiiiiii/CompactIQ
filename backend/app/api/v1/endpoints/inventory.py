@@ -98,9 +98,10 @@ async def get_graph_elements(device_id: str = None, db: AsyncSession = Depends(g
         "style": { "background": "#0076CE", "color": "#fff" }
     })
     
-    # Generate nodes
-    node_x_spacing = 220
-    node_y_start = 180
+    # Generate nodes in a grid
+    cols = 4
+    x_spacing = 300
+    y_spacing = 150
     
     index = 0
     for node_name in graph_engine.graph.nodes:
@@ -111,8 +112,10 @@ async def get_graph_elements(device_id: str = None, db: AsyncSession = Depends(g
             if (u == node_name or v == node_name) and data.get("relation") == "INCOMPATIBLE":
                 is_red = True
                 
-        pos_x = 100 + (index * node_x_spacing)
-        pos_y = node_y_start
+        row = index // cols
+        col = index % cols
+        pos_x = 100 + (col * x_spacing)
+        pos_y = 180 + (row * y_spacing)
         
         node_style = {}
         if is_red:
@@ -156,6 +159,28 @@ async def get_graph_elements(device_id: str = None, db: AsyncSession = Depends(g
         edge_idx += 1
         
     return {"elements": elements}
+
+@router.get("/rules")
+async def get_all_rules(db: AsyncSession = Depends(get_db)):
+    rules_result = await db.execute(select(Rule).options(selectinload(Rule.document)))
+    rules = rules_result.scalars().all()
+    
+    rules_data = []
+    for r in rules:
+        source_doc = r.document.filename if r.document else "Unknown Origin"
+        rules_data.append({
+            "id": r.id,
+            "source_component": f"{r.source_component_type} v{r.source_version}",
+            "target_component": f"{r.target_component_type} {r.target_min_version or ''} {r.incompatible_version or ''}".strip(),
+            "relation": r.rule_type,
+            "reason": r.reason,
+            "confidence": r.confidence,
+            "ambiguous": r.ambiguous,
+            "degrades_silently": r.degrades_silently_if_unmet,
+            "source_document": source_doc
+        })
+        
+    return {"rules": rules_data}
 
 @router.get("/{device_id}", response_model=ComplianceResponse)
 async def get_compliance(device_id: str, db: AsyncSession = Depends(get_db)):

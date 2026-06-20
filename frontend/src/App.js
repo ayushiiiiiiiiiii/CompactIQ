@@ -7,7 +7,8 @@ import Dashboard from './pages/Dashboard';
 import GraphView from './pages/GraphView';
 import DocumentUpload from './pages/DocumentUpload';
 import LandingPage from './pages/LandingPage';
-import { Sun, Moon, Database, UploadCloud, Monitor, Network } from 'lucide-react';
+import RulesMatrix from './pages/RulesMatrix';
+import { Sun, Moon, Database, UploadCloud, Monitor, Network, Table } from 'lucide-react';
 
 const AdminLayout = ({ theme, toggleTheme }) => {
   return (
@@ -24,7 +25,8 @@ const AdminLayout = ({ theme, toggleTheme }) => {
         
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <li><Link to="/admin/ingest" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><UploadCloud size={18} /> Document Ingestion</Link></li>
-          <li><Link to="/admin/graph" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Database size={18} /> Global Graph</Link></li>
+          <li><Link to="/admin/graph" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Network size={18} /> Global Graph</Link></li>
+          <li><Link to="/admin/rules" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Table size={18} /> Rules Matrix</Link></li>
         </ul>
         
         <div style={{ marginTop: 'auto', padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '12px' }}>
@@ -88,6 +90,7 @@ function App() {
         <Route path="/admin" element={<AdminLayout theme={theme} toggleTheme={toggleTheme} />}>
           <Route path="ingest" element={<DocumentUpload />} />
           <Route path="graph" element={<GraphView isGlobal={true} />} />
+          <Route path="rules" element={<RulesMatrix />} />
         </Route>
         
         <Route path="/client" element={<ClientLayout theme={theme} toggleTheme={toggleTheme} />}>
