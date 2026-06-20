@@ -69,12 +69,10 @@ const ClientLayout = ({ theme, toggleTheme }) => {
 
       const runAutoScan = async () => {
           try {
-              console.log("[CompactIQ] Application Started");
-
               await Promise.race([
                   new Promise(r => setTimeout(r, 1500)),
                   new Promise((_, reject) => setTimeout(() => reject(new Error("Splash Timeout")), 3000))
-              ]).catch(e => console.warn("[CompactIQ] Splash timeout enforced:", e));
+              ]).catch(() => {});
 
               setPhaseIndex(1);
               await new Promise(r => setTimeout(r, 1000));

@@ -8,7 +8,7 @@ def parse_version(v_str: str) -> List[int]:
     try:
         cleaned = "".join(c if c.isdigit() or c == "." else "" for c in v_str)
         return [int(x) for x in cleaned.split(".") if x]
-    except Exception:
+    except (ValueError, TypeError, AttributeError):
         return [0]
 
 class GraphService:

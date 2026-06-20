@@ -4,6 +4,8 @@ from app.schemas.schemas import DocumentUploadResponse
 from app.db.database import get_db
 import aiofiles
 import os
+from sqlalchemy.future import select
+from app.models.models import Document
 from app.core.config import settings
 
 router = APIRouter()
@@ -32,8 +34,7 @@ async def upload_document(file: UploadFile = File(...), db: AsyncSession = Depen
     )
 
 @router.get("/")
-async def list_documents():
-    seed_dir = settings.SEED_DIR
-    if not os.path.exists(seed_dir):
-        return {"documents": []}
-    return {"documents": os.listdir(seed_dir)}
+async def list_documents(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Document))
+    docs = result.scalars().all()
+    return {"documents": [doc.filename for doc in docs]}

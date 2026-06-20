@@ -1,11 +1,17 @@
 import os
 import json
+import logging
 import fitz  # PyMuPDF
 from typing import List, Dict, Any
 from app.core.config import settings
 from app.db.database import async_session
 from app.models.models import Document, Rule
 from sqlalchemy.future import select
+from openai import AsyncOpenAI
+
+logger = logging.getLogger(__name__)
+
+aclient = AsyncOpenAI(api_key=settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
 
 # Documents are automatically loaded from the compatibility_docs seed directory. 
 # Additional compatibility documents can be added without changing application code.
@@ -33,6 +39,7 @@ async def ingest_document_file(filepath: str, filename: str) -> int:
             # Parse document text
             text = parse_document(filepath)
             if not text:
+                logger.error(f"Failed to extract text from {filepath}")
                 return None
 
             # Create document record
@@ -44,14 +51,14 @@ async def ingest_document_file(filepath: str, filename: str) -> int:
             rules_data = await extract_rules_from_text(text)
             for r_data in rules_data:
                 rule = Rule(
-                    source_component_type=r_data["source_component_type"],
-                    source_version=r_data["source_version"],
-                    target_component_type=r_data["target_component_type"],
+                    source_component_type=r_data.get("source_component_type"),
+                    source_version=r_data.get("source_version", "0.0.0"),
+                    target_component_type=r_data.get("target_component_type"),
                     target_min_version=r_data.get("target_min_version"),
                     target_max_version=r_data.get("target_max_version"),
                     incompatible_version=r_data.get("incompatible_version"),
-                    rule_type=r_data["rule_type"],
-                    reason=r_data["reason"],
+                    rule_type=r_data.get("rule_type", "REQUIRES"),
+                    reason=r_data.get("reason"),
                     document_id=db_doc.id
                 )
                 session.add(rule)
@@ -71,49 +78,79 @@ def parse_document(filepath: str) -> str:
                 text += page.get_text()
             return text
     except Exception as e:
-        print(f"Error reading {filepath}: {e}")
+        logger.error(f"Error reading {filepath}: {e}")
     return ""
 
 async def extract_rules_from_text(text: str) -> List[Dict[str, Any]]:
-    """Heuristic rule extractor for hackathon, simulating LLM parser output with robust demo rules."""
-    rules = []
-    
-    # Demonstration Rules to naturally lower score
-    
-    # 1. OS to BIOS Dependency
-    rules.append({
-        "source_component_type": "OS",
-        "source_version": "0.0.0", # applies broadly
-        "target_component_type": "BIOS",
-        "target_min_version": "1.15.0",
-        "target_max_version": None,
-        "incompatible_version": None,
-        "rule_type": "REQUIRES",
-        "reason": "Enterprise policy dictates Windows endpoints must run modern BIOS firmware."
-    })
-    
-    # 2. SecurityAgent to NIC Conflict
-    rules.append({
-        "source_component_type": "SecurityAgent",
-        "source_version": "0.0.0",
-        "target_component_type": "Intel_NIC",
-        "target_min_version": None,
-        "target_max_version": None,
-        "incompatible_version": "22.0",
-        "rule_type": "INCOMPATIBLE_WITH",
-        "reason": "Security Agents experience kernel deadlocks with older Intel NIC drivers."
-    })
-    
-    # 3. SecurityAgent Requires TPB/Software (Demo fallback)
-    rules.append({
-        "source_component_type": "SecurityAgent",
-        "source_version": "0.0.0",
-        "target_component_type": "Software",
-        "target_min_version": "1.0",
-        "target_max_version": None,
-        "incompatible_version": None,
-        "rule_type": "REQUIRES",
-        "reason": "Endpoint security agents require baseline baseline support software to function."
-    })
+    """Uses an LLM to extract dependency rules from document text."""
+    if not aclient:
+        logger.warning("OPENAI_API_KEY is not set. Falling back to mock rules.")
+        return [
+            {
+                "source_component_type": "OS",
+                "source_version": "0.0.0",
+                "target_component_type": "BIOS",
+                "target_min_version": "1.15.0",
+                "target_max_version": None,
+                "incompatible_version": None,
+                "rule_type": "REQUIRES",
+                "reason": "Enterprise policy dictates Windows endpoints must run modern BIOS firmware."
+            }
+        ]
 
-    return rules
+    system_prompt = """You are a technical compliance expert. Extract system compatibility rules from the provided text.
+Return the rules as a JSON array of objects.
+Each object must have:
+- source_component_type (str)
+- source_version (str, default '0.0.0')
+- target_component_type (str)
+- target_min_version (str or null)
+- target_max_version (str or null)
+- incompatible_version (str or null)
+- rule_type (str, either 'REQUIRES' or 'INCOMPATIBLE_WITH')
+- reason (str)
+
+Example Output:
+[
+  {
+    "source_component_type": "SecurityAgent",
+    "source_version": "0.0.0",
+    "target_component_type": "Intel_NIC",
+    "target_min_version": null,
+    "target_max_version": null,
+    "incompatible_version": "22.0",
+    "rule_type": "INCOMPATIBLE_WITH",
+    "reason": "Security Agents experience kernel deadlocks with older Intel NIC drivers."
+  }
+]
+"""
+    try:
+        # We only pass a chunk of text to save tokens and prevent huge inputs
+        snippet = text[:4000]
+        
+        response = await aclient.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Extract rules from the following text:\n\n{snippet}"}
+            ],
+            temperature=0,
+            response_format={ "type": "json_object" }
+        )
+        
+        content = response.choices[0].message.content
+        # Sometimes the model wraps the array in an object like {"rules": [...]}
+        data = json.loads(content)
+        if isinstance(data, dict):
+            # Try to find the array
+            for key, val in data.items():
+                if isinstance(val, list):
+                    return val
+            return []
+        elif isinstance(data, list):
+            return data
+            
+        return []
+    except Exception as e:
+        logger.error(f"Error extracting rules via OpenAI: {e}")
+        return []
