@@ -39,5 +39,12 @@ class Rule(Base):
     incompatible_version = Column(String, nullable=True)
     rule_type = Column(String) # REQUIRES or INCOMPATIBLE_WITH
     reason = Column(Text, nullable=True)
+    
+    # Mock LLM Extractions
+    confidence = Column(Integer, default=100) # Percentage
+    ambiguous = Column(Boolean, default=False)
+    extraction_notes = Column(Text, nullable=True)
+    degrades_silently_if_unmet = Column(Boolean, default=False)
+    
     document_id = Column(Integer, ForeignKey("documents.id"))
     document = relationship("Document")

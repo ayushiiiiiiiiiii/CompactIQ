@@ -57,11 +57,9 @@ async def submit_inventory(request: InventoryRequest, db: AsyncSession = Depends
     # 4. Form Remediation if violations exist
     remed = None
     if validation_result["violations"]:
-        remed = Remediation(
-            recommended_action="Update target component to latest tested version.",
-            safe_to_execute=True,
-            simulated_script=f"Update-Component -Type {validation_result['violations'][0]['target_component']}"
-        )
+        remed_data = graph_engine.generate_remediation(validation_result["violations"], request.device_id)
+        if remed_data:
+            remed = Remediation(**remed_data)
 
     response = ComplianceResponse(
         device_id=request.device_id,
@@ -187,11 +185,9 @@ async def get_compliance(device_id: str, db: AsyncSession = Depends(get_db)):
     # 4. Form Remediation if violations exist
     remed = None
     if validation_result["violations"]:
-        remed = Remediation(
-            recommended_action="Update target component to latest tested version.",
-            safe_to_execute=True,
-            simulated_script=f"Update-Component -Type {validation_result['violations'][0]['target_component']}"
-        )
+        remed_data = graph_engine.generate_remediation(validation_result["violations"], device_id)
+        if remed_data:
+            remed = Remediation(**remed_data)
 
     components_info = [
         ComponentInfo(type=c.component_type, vendor=c.vendor, version=c.version)

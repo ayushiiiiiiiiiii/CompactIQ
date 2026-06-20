@@ -18,6 +18,7 @@ class InventoryRequest(BaseModel):
 
 class Violation(BaseModel):
     severity: str
+    type: Optional[str] = None
     source_component: str
     target_component: str
     root_cause_explanation: str

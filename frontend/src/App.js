@@ -4,6 +4,7 @@ import 'react-flow-renderer/dist/style.css';
 import 'react-flow-renderer/dist/theme-default.css';
 import Dashboard from './pages/Dashboard';
 import GraphView from './pages/GraphView';
+import DocumentUpload from './pages/DocumentUpload';
 
 function App() {
   return (
@@ -14,12 +15,14 @@ function App() {
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li style={{ margin: '15px 0' }}><Link to="/" style={{ color: 'white', textDecoration: 'none' }}>Dashboard</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/graph" style={{ color: 'white', textDecoration: 'none' }}>Dependency Graph</Link></li>
+            <li style={{ margin: '15px 0' }}><Link to="/ingest" style={{ color: 'white', textDecoration: 'none' }}>Document Ingestion</Link></li>
           </ul>
         </nav>
         <main style={{ flex: 1, padding: '30px', overflowY: 'auto' }}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/graph" element={<GraphView />} />
+            <Route path="/ingest" element={<DocumentUpload />} />
           </Routes>
         </main>
       </div>
