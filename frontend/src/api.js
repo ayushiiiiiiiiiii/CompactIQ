@@ -25,6 +25,11 @@ export const getGraphElements = async (deviceId) => {
     return response.data;
 };
 
+export const getGlobalRules = async () => {
+    const response = await axios.get(`${API_BASE}/inventory/rules`);
+    return response.data;
+};
+
 export const uploadDocument = async (file) => {
     const formData = new FormData();
     formData.append('file', file);

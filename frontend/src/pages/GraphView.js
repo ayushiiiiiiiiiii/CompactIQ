@@ -3,7 +3,7 @@ import ReactFlow, { Background, Controls } from 'react-flow-renderer';
 import { getGraphElements } from '../api';
 import { Network } from 'lucide-react';
 
-const GraphView = () => {
+const GraphView = ({ isGlobal }) => {
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -20,7 +20,19 @@ const GraphView = () => {
     useEffect(() => {
         const fetchGraph = async () => {
             try {
-                const deviceId = localStorage.getItem('scannedDeviceId');
+                let deviceId = null;
+                
+                if (!isGlobal) {
+                    deviceId = localStorage.getItem('scannedDeviceId');
+                    if (!deviceId) {
+                        console.log("No device scanned yet. Cannot load local graph.");
+                        setNodes([]);
+                        setEdges([]);
+                        setLoading(false);
+                        return;
+                    }
+                }
+
                 const data = await getGraphElements(deviceId);
                 let graphElements = [];
                 if (data && data.elements && data.elements.length > 0) {
@@ -60,11 +72,11 @@ const GraphView = () => {
         <div style={{ maxWidth: '1200px', margin: '0 auto', height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ marginBottom: '24px' }}>
                 <h1 style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <Network size={28} color="var(--button-bg)" />
-                    Dependency Knowledge Graph
+                    <Network size={28} color={isGlobal ? "#3b82f6" : "#10b981"} />
+                    {isGlobal ? "Global Knowledge Graph" : "Device Dependency Graph"}
                 </h1>
                 <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-                    Visual representation of all endpoint constraints, requirements, and hardware collisions.
+                    {isGlobal ? "Visual representation of all enterprise constraints, requirements, and hardware rules." : "Visual representation of all endpoint constraints, requirements, and hardware collisions."}
                 </p>
             </div>
             
@@ -80,14 +92,18 @@ const GraphView = () => {
                     </div>
                 </div>
                 
-                <div style={{ flex: 1, position: 'relative', background: 'var(--bg-color)' }}>
+                <div style={{ flex: 1, position: 'relative', background: 'var(--bg-color)', width: '100%', height: '100%' }}>
                     {nodes.length > 0 ? (
-                        <ReactFlow nodes={nodes} edges={edges}>
+                        <ReactFlow nodes={nodes} edges={edges} style={{ width: '100%', height: '100%' }} fitView minZoom={0.1} maxZoom={2}>
                             <Background color="var(--text-secondary)" gap={16} size={1} />
                             <Controls style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', overflow: 'hidden', boxShadow: 'var(--shadow)' }} />
                         </ReactFlow>
                     ) : (
-                        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>No graph nodes found to display.</div>
+                        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                            {!isGlobal && !localStorage.getItem('scannedDeviceId')
+                                ? "Please run a device validation scan from the Dashboard to map your local dependency graph."
+                                : "No graph nodes found to display."}
+                        </div>
                     )}
                 </div>
             </div>
