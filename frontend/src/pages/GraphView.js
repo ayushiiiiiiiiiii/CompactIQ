@@ -94,7 +94,7 @@ const GraphView = ({ isGlobal }) => {
                 
                 <div style={{ flex: 1, position: 'relative', background: 'var(--bg-color)', width: '100%', height: '100%' }}>
                     {nodes.length > 0 ? (
-                        <ReactFlow nodes={nodes} edges={edges} style={{ width: '100%', height: '100%' }} fitView>
+                        <ReactFlow nodes={nodes} edges={edges} style={{ width: '100%', height: '100%' }} fitView minZoom={0.1} maxZoom={2}>
                             <Background color="var(--text-secondary)" gap={16} size={1} />
                             <Controls style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', overflow: 'hidden', boxShadow: 'var(--shadow)' }} />
                         </ReactFlow>
