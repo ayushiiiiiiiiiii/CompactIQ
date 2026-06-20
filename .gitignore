@@ -1,1 +1,29 @@
-frontend/node_modules
+# Frontend
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Backend
+backend/venv/
+backend/compliance.db
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# General/IDE
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo

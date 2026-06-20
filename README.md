@@ -6,11 +6,9 @@ A living, AI-driven platform that converts static enterprise documentation into 
 ## Repository Structure
 ```
 .
-├── backend/            # FastAPI, PostgreSQL, NetworkX backend
+├── backend/            # FastAPI, SQLite, NetworkX backend
 │   ├── app/            # Source code
-│   ├── seeds/          # Mock data and document corpus
-│   ├── Dockerfile      
-│   └── docker-compose.yml
+│   └── seeds/          # Mock data and document corpus
 ├── frontend/           # Electron + React Application
 │   ├── public/         # Electron Entry points
 │   ├── src/            # React Code (React-Flow Graph)
@@ -21,16 +19,21 @@ A living, AI-driven platform that converts static enterprise documentation into 
 ## Running the Complete Application
 
 ### Step 1: Start the Backend Cloud Platform
-The backend requires Docker.
+The backend is a FastAPI application that uses a local SQLite database. Ensure you have Python installed.
 ```bash
 cd backend
-docker-compose up -d --build
+python -m venv venv
+# On Windows
+.\venv\Scripts\activate
+# On Mac/Linux
+source venv/bin/activate
+
+pip install -r requirements.txt
+python -m uvicorn app.main:app --port 8000
 ```
 This will start:
 - FastAPI Services on `http://localhost:8000` (Docs available at `/api/v1/openapi.json`)
-- PostgreSQL Database on `5432`
-- Redis on `6379`
-- Celery Task Workers
+- A local SQLite database (`compliance.db`)
 
 ### Step 2: Start the Client End-User App (Electron + React)
 You need Node.js `v18+`.
