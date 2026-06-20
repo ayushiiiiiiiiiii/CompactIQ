@@ -3,7 +3,7 @@ import ReactFlow, { Background, Controls } from 'react-flow-renderer';
 import { getGraphElements } from '../api';
 import { Network } from 'lucide-react';
 
-const GraphView = () => {
+const GraphView = ({ isGlobal }) => {
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -20,7 +20,7 @@ const GraphView = () => {
     useEffect(() => {
         const fetchGraph = async () => {
             try {
-                const deviceId = localStorage.getItem('scannedDeviceId');
+                const deviceId = isGlobal ? null : localStorage.getItem('scannedDeviceId');
                 const data = await getGraphElements(deviceId);
                 let graphElements = [];
                 if (data && data.elements && data.elements.length > 0) {
@@ -60,11 +60,11 @@ const GraphView = () => {
         <div style={{ maxWidth: '1200px', margin: '0 auto', height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ marginBottom: '24px' }}>
                 <h1 style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <Network size={28} color="var(--button-bg)" />
-                    Dependency Knowledge Graph
+                    <Network size={28} color={isGlobal ? "#3b82f6" : "#10b981"} />
+                    {isGlobal ? "Global Knowledge Graph" : "Device Dependency Graph"}
                 </h1>
                 <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-                    Visual representation of all endpoint constraints, requirements, and hardware collisions.
+                    {isGlobal ? "Visual representation of all enterprise constraints, requirements, and hardware rules." : "Visual representation of all endpoint constraints, requirements, and hardware collisions."}
                 </p>
             </div>
             
