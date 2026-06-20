@@ -38,39 +38,23 @@ const DocumentUpload = () => {
         }
     };
 
-    const runSimulatedAnimation = async (filename) => {
-        const lines = [
-            { text: "Initializing deep semantics parsers...", delay: 0, type: "info" },
-            { text: `Reading document payload: ${filename}`, delay: 600, type: "info" },
-            { text: "Extracting knowledge entities...", delay: 1500, type: "process" },
-            { text: "Found hardware constraints. Building dependency matrix...", delay: 2800, type: "process" },
-            { text: "[RULE MATCH] REQUIRES -> Conf=98.5% [degrades_silently=true]", delay: 3800, type: "success" },
-            { text: "[RULE MATCH] INCOMPATIBLE -> Conf=86.2% [ambiguous=true]", delay: 4600, type: "warning" },
-            { text: "Knowledge Graph vectors successfully updated!", delay: 5500, type: "success" }
-        ];
-
-        for (const line of lines) {
-            await new Promise(r => setTimeout(r, line.delay === 0 ? 0 : line.delay - (lines[lines.indexOf(line)-1]?.delay || 0)));
-            setAnimationLines(prev => [...prev, { text: line.text, type: line.type }]);
-            if (terminalRef.current) {
-                terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
-            }
-        }
-        setUploadComplete(true);
-    };
-
     const handleUpload = async () => {
         if (!file) return;
         setIsUploading(true);
-        setAnimationLines([]);
+        setAnimationLines([{ text: `Uploading and processing ${file.name} with Gemini LLM...`, type: "info" }]);
+        setUploadComplete(false);
         
         try {
-            const uploadPromise = uploadDocument(file);
-            const animPromise = runSimulatedAnimation(file.name);
-            await Promise.all([uploadPromise, animPromise]);
+            await uploadDocument(file);
+            setAnimationLines(prev => [
+                ...prev, 
+                { text: "[SUCCESS] Extracted hardware constraints and dependencies.", type: "success" },
+                { text: "Knowledge Graph successfully updated with new rules!", type: "success" }
+            ]);
+            setUploadComplete(true);
         } catch (error) {
             console.error("Upload failed", error);
-            setAnimationLines(prev => [...prev, { text: "ERROR: Failed to establish secure connection to API backend.", type: "error" }]);
+            setAnimationLines(prev => [...prev, { text: `ERROR: Processing failed: ${error.message || "Unknown error"}`, type: "error" }]);
             setUploadComplete(true);
         }
         setIsUploading(false);

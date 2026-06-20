@@ -26,8 +26,8 @@ async def startup_event():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # Automatically load and ingest seeds
-    await load_and_ingest_seeds()
+    # Removed automatic loading of seed directory so that ONLY manually uploaded files are processed
+    # await load_and_ingest_seeds()
 
 @app.get("/")
 def root():

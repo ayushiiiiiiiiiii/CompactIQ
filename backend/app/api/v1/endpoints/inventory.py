@@ -8,6 +8,34 @@ from app.schemas.schemas import InventoryRequest, ComplianceResponse, Violation,
 from app.db.database import get_db
 from app.models.models import Rule, Device, DeviceComponent
 from app.services.graph_service import graph_engine
+from app.core.config import settings
+from google import genai
+
+async def generate_remediation_script(violations: list[dict]) -> str:
+    try:
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        prompt = """You are an Expert Windows System Administrator and Security Engineer. 
+Write a highly robust, safe, and IDEMPOTENT PowerShell script to remediate the following compliance violations. 
+
+STRICT REQUIREMENTS:
+1. Idempotency: You MUST check if the fix is actually needed before applying it. Do not blindly execute commands.
+2. Safety: Include Try/Catch blocks for error handling.
+3. Logging: Output clear Write-Host messages indicating what is being checked, changed, or if it failed.
+4. Output Format: Return ONLY the raw PowerShell script code. DO NOT wrap it in markdown blocks (no ```powershell). DO NOT include any explanatory text.
+
+Violations to Remediate:
+"""
+        for v in violations:
+            prompt += f"- Conflict: {v.get('source_component')} vs {v.get('target_component')}\n  Root Cause: {v.get('root_cause_explanation')}\n\n"
+            
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+        )
+        return response.text.strip().replace("```powershell", "").replace("```", "")
+    except Exception as e:
+        print(f"Error generating script: {e}")
+        return "# Failed to generate dynamic script\nInvoke-CompactIQRemediation -AutoFix"
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -72,7 +100,7 @@ async def submit_inventory(request: InventoryRequest, db: AsyncSession = Depends
             remed = Remediation(
                 recommended_action="Execute the recommended resolution roadmap sequentially.",
                 safe_to_execute=True,
-                simulated_script="Invoke-CompactIQRemediation -AutoFix",
+                simulated_script=await generate_remediation_script(validation_result["violations"]),
                 roadmap=roadmap_steps
             )
 
@@ -157,7 +185,7 @@ async def get_compliance(device_id: str, db: AsyncSession = Depends(get_db)):
         remed = Remediation(
             recommended_action="Execute the recommended resolution roadmap sequentially.",
             safe_to_execute=True,
-            simulated_script="Invoke-CompactIQRemediation -AutoFix",
+            simulated_script=await generate_remediation_script(validation_result["violations"]),
             roadmap=roadmap_steps
         )
 

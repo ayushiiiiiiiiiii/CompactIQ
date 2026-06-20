@@ -22,8 +22,8 @@ class Settings(BaseSettings):
     # Redis / Celery
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     
-    # OpenAI
-    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    # Gemini
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
     # Paths
     # Documents are automatically loaded from the compatibility_docs seed directory. 

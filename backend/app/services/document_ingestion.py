@@ -1,5 +1,6 @@
 import os
 import json
+import asyncio
 import fitz  # PyMuPDF
 from typing import List, Dict, Any
 from app.core.config import settings
@@ -31,9 +32,12 @@ async def ingest_document_file(filepath: str, filename: str) -> int:
                 return db_doc.id
 
             # Parse document text
-            text = parse_document(filepath)
+            text = await asyncio.to_thread(parse_document, filepath)
             if not text:
-                return None
+                db_doc = Document(filename=filename, status="failed")
+                session.add(db_doc)
+                await session.flush()
+                return db_doc.id
 
             # Create document record
             db_doc = Document(filename=filename, status="completed")
@@ -74,94 +78,59 @@ def parse_document(filepath: str) -> str:
         print(f"Error reading {filepath}: {e}")
     return ""
 
+from pydantic import BaseModel, Field
+from google import genai
+from google.genai import types
+
+class ExtractedRule(BaseModel):
+    source_component_type: str = Field(description="The component type requiring or conflicting with something (e.g., OS, SecurityAgent, BIOS)")
+    source_version: str = Field(description="The version of the source component, or * if not specified")
+    target_component_type: str = Field(description="The component type being required or conflicted with")
+    target_min_version: str | None = Field(default=None, description="Minimum required version, if applicable")
+    target_max_version: str | None = Field(default=None, description="Maximum allowed version, if applicable")
+    incompatible_version: str | None = Field(default=None, description="Specific version that is incompatible, if applicable")
+    rule_type: str = Field(description="Type of relationship: REQUIRES, DEPENDS_ON, SUPPORTED_ON, CONFLICTS_WITH")
+    reason: str = Field(description="Explanation of why this rule exists based on the document")
+
+class ExtractedRulesList(BaseModel):
+    rules: list[ExtractedRule]
+
 async def extract_rules_from_text(text: str) -> List[Dict[str, Any]]:
-    """Heuristic rule extractor for hackathon, simulating LLM parser output with robust demo rules."""
-    rules = []
-    
-    # Demonstration Rules to naturally lower score
-    
-    # 1. OS requires BIOS
-    rules.append({
-        "source_component_type": "OS",
-        "source_version": "0.0.0",
-        "target_component_type": "BIOS",
-        "target_min_version": "1.15.0",
-        "target_max_version": None,
-        "incompatible_version": None,
-        "rule_type": "REQUIRES",
-        "reason": "Enterprise policy dictates Windows endpoints must run modern BIOS firmware."
-    })
-    
-    # 2. BIOS depends on Firmware
-    rules.append({
-        "source_component_type": "BIOS",
-        "source_version": "0.0.0",
-        "target_component_type": "Firmware",
-        "target_min_version": "2.0.0",
-        "target_max_version": None,
-        "incompatible_version": None,
-        "rule_type": "DEPENDS_ON",
-        "reason": "BIOS interfaces directly with base component firmware."
-    })
+    """Uses Gemini LLM to extract dependency rules from document text."""
+    try:
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        
+        if len(text) > 50000:
+            print(f"Warning: Document text exceeds 50,000 characters. Truncating to prevent token limits.")
+            text = text[:50000]
+        
+        prompt = f"""You are an expert AI building a structural Knowledge Graph for an Enterprise Compatibility Matrix. Your job is to analyze the following document text and extract architectural dependency or conflict rules strictly conforming to the requested schema.
 
-    # 3. Security Agent requires OS
-    rules.append({
-        "source_component_type": "SecurityAgent",
-        "source_version": "0.0.0",
-        "target_component_type": "OS",
-        "target_min_version": "10.0.0",
-        "target_max_version": None,
-        "incompatible_version": None,
-        "rule_type": "REQUIRES",
-        "reason": "Security Agent requires supported Windows 11 build."
-    })
-    
-    # 4. Network Driver requires Intel NIC
-    rules.append({
-        "source_component_type": "NetworkDriver",
-        "source_version": "0.0.0",
-        "target_component_type": "Intel_NIC",
-        "target_min_version": None,
-        "target_max_version": None,
-        "incompatible_version": None,
-        "rule_type": "REQUIRES",
-        "reason": "Network driver is specific to Intel hardware interfaces."
-    })
-    
-    # 5. TPM required by OS
-    rules.append({
-        "source_component_type": "OS",
-        "source_version": "0.0.0",
-        "target_component_type": "TPM",
-        "target_min_version": "2.0",
-        "target_max_version": None,
-        "incompatible_version": None,
-        "rule_type": "REQUIRES",
-        "reason": "Windows 11 strictly requires TPM 2.0 for security features."
-    })
-    
-    # 6. Application supported on OS
-    rules.append({
-        "source_component_type": "Application",
-        "source_version": "0.0.0",
-        "target_component_type": "OS",
-        "target_min_version": "10.0.0",
-        "target_max_version": None,
-        "incompatible_version": None,
-        "rule_type": "SUPPORTED_ON",
-        "reason": "Corporate application relies on modern OS libraries."
-    })
-    
-    # 7. Old Software conflicts with OS
-    rules.append({
-        "source_component_type": "LegacyApp",
-        "source_version": "0.0.0",
-        "target_component_type": "OS",
-        "target_min_version": None,
-        "target_max_version": None,
-        "incompatible_version": "10.0.0",
-        "rule_type": "CONFLICTS_WITH",
-        "reason": "Legacy application is known to cause blue screens on Windows 11."
-    })
+Strict Versioning Guidelines:
+1. Look closely for specific version numbers of the Source Component. If the document says "CrowdStrike Falcon Sensor v7.18 requires...", then the source_version is "7.18".
+2. If the document states a general compatibility rule without mentioning a specific version for the source component (e.g., "SecurityAgent requires Software 1.0"), you MUST use "*" as a wildcard meaning "All Versions".
+3. Do NOT default to "0.0.0" unless that exact literal string is explicitly written in the text. If it applies universally or no version is specified, use "*".
 
-    return rules
+Document Text to Process:
+---
+{text}
+---"""
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=ExtractedRulesList,
+                temperature=0.1
+            ),
+        )
+        
+        result_json = json.loads(response.text)
+        # Ensure we return a list of dicts that match what the DB insertion expects
+        return result_json.get("rules", [])
+        
+    except Exception as e:
+        print(f"Error extracting rules via Gemini: {e}")
+        # Fallback to empty rules if LLM fails
+        return []
