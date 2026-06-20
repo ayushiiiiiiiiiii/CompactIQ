@@ -20,7 +20,19 @@ const GraphView = ({ isGlobal }) => {
     useEffect(() => {
         const fetchGraph = async () => {
             try {
-                const deviceId = isGlobal ? null : localStorage.getItem('scannedDeviceId');
+                let deviceId = null;
+                
+                if (!isGlobal) {
+                    deviceId = localStorage.getItem('scannedDeviceId');
+                    if (!deviceId) {
+                        console.log("No device scanned yet. Cannot load local graph.");
+                        setNodes([]);
+                        setEdges([]);
+                        setLoading(false);
+                        return;
+                    }
+                }
+
                 const data = await getGraphElements(deviceId);
                 let graphElements = [];
                 if (data && data.elements && data.elements.length > 0) {
@@ -80,14 +92,18 @@ const GraphView = ({ isGlobal }) => {
                     </div>
                 </div>
                 
-                <div style={{ flex: 1, position: 'relative', background: 'var(--bg-color)' }}>
+                <div style={{ flex: 1, position: 'relative', background: 'var(--bg-color)', width: '100%', height: '100%' }}>
                     {nodes.length > 0 ? (
-                        <ReactFlow nodes={nodes} edges={edges}>
+                        <ReactFlow nodes={nodes} edges={edges} style={{ width: '100%', height: '100%' }} fitView>
                             <Background color="var(--text-secondary)" gap={16} size={1} />
                             <Controls style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', overflow: 'hidden', boxShadow: 'var(--shadow)' }} />
                         </ReactFlow>
                     ) : (
-                        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>No graph nodes found to display.</div>
+                        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                            {!isGlobal && !localStorage.getItem('scannedDeviceId')
+                                ? "Please run a device validation scan from the Dashboard to map your local dependency graph."
+                                : "No graph nodes found to display."}
+                        </div>
                     )}
                 </div>
             </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Outlet } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Link, Outlet } from 'react-router-dom';
 import 'react-flow-renderer/dist/style.css';
 import 'react-flow-renderer/dist/theme-default.css';
 import './index.css';
