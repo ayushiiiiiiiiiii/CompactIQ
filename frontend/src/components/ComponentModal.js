@@ -51,7 +51,7 @@ const ComponentModal = () => {
                                 {node.status}
                             </span>
                         </div>
-                        <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Version: <strong style={{ color: '#334155' }}>{node.version || 'Unknown'}</strong></p>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px' }}>Version: <strong style={{ color: 'var(--text-primary)' }}>{node.version || 'Unknown'}</strong></p>
                     </div>
                     <button 
                         onClick={() => setIsModalOpen(false)}
@@ -67,24 +67,24 @@ const ComponentModal = () => {
                     <div style={{ marginBottom: '20px' }}>
                         <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: 'var(--text-primary)', borderBottom: '1px solid var(--card-border)', paddingBottom: '8px' }}>Dependency Chain</h3>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                            <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                                <strong style={{ display: 'block', color: '#475569', fontSize: '13px', textTransform: 'uppercase', marginBottom: '8px' }}>Required By (Upstream)</strong>
+                            <div style={{ backgroundColor: 'var(--bg-color)', padding: '15px', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                                <strong style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '13px', textTransform: 'uppercase', marginBottom: '8px' }}>Required By (Upstream)</strong>
                                 {upstream.length > 0 ? (
-                                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#334155', fontSize: '14px' }}>
+                                    <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--text-primary)', fontSize: '14px' }}>
                                         {upstream.map((e, idx) => <li key={idx}><strong>{e.source}</strong> ({e.label})</li>)}
                                     </ul>
                                 ) : (
-                                    <div style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>No upstream dependencies.</div>
+                                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>No upstream dependencies.</div>
                                 )}
                             </div>
-                            <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                                <strong style={{ display: 'block', color: '#475569', fontSize: '13px', textTransform: 'uppercase', marginBottom: '8px' }}>Depends On (Downstream)</strong>
+                            <div style={{ backgroundColor: 'var(--bg-color)', padding: '15px', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                                <strong style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '13px', textTransform: 'uppercase', marginBottom: '8px' }}>Depends On (Downstream)</strong>
                                 {downstream.length > 0 ? (
-                                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#334155', fontSize: '14px' }}>
+                                    <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--text-primary)', fontSize: '14px' }}>
                                         {downstream.map((e, idx) => <li key={idx}><strong>{e.target}</strong> ({e.label})</li>)}
                                     </ul>
                                 ) : (
-                                    <div style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>No downstream dependencies.</div>
+                                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>No downstream dependencies.</div>
                                 )}
                             </div>
                         </div>
@@ -94,23 +94,23 @@ const ComponentModal = () => {
                         <div style={{ marginBottom: '20px' }}>
                             <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: 'var(--text-primary)', borderBottom: '1px solid var(--card-border)', paddingBottom: '8px' }}>Detected Conflicts & Violations</h3>
                             {violations.map((v, idx) => (
-                                <div key={idx} style={{ marginBottom: '15px', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid #fee2e2', borderRadius: '8px', padding: '15px' }}>
-                                    <h4 style={{ margin: '0 0 8px 0', color: '#ef4444', fontSize: '15px', display: 'flex', justifyContent: 'space-between' }}>
+                                <div key={idx} style={{ marginBottom: '15px', backgroundColor: 'var(--error-bg)', border: '1px solid var(--error-border)', borderRadius: '8px', padding: '15px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', color: 'var(--error-text)', fontSize: '15px', display: 'flex', justifyContent: 'space-between' }}>
                                         {v.what_failed || v.root_cause_explanation}
-                                        <span style={{ fontSize: '12px', backgroundColor: '#ef4444', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>{v.severity} Risk</span>
+                                        <span style={{ fontSize: '12px', backgroundColor: 'var(--error-border)', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>{v.severity} Risk</span>
                                     </h4>
                                     
-                                    <div style={{ fontSize: '14px', color: '#7f1d1d', marginBottom: '10px' }}>
+                                    <div style={{ fontSize: '14px', color: 'var(--error-text)', marginBottom: '10px' }}>
                                         <strong>Root Cause:</strong> {v.why_failed || v.root_cause_explanation}
                                     </div>
                                     
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px' }}>
-                                        <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '6px', border: '1px solid #fecaca' }}>
-                                            <strong style={{ color: '#ef4444', display: 'block', marginBottom: '4px' }}>Business Impact</strong>
+                                        <div style={{ backgroundColor: 'rgba(0,0,0,0.1)', padding: '10px', borderRadius: '6px', border: '1px solid var(--error-border)' }}>
+                                            <strong style={{ color: 'var(--error-text)', display: 'block', marginBottom: '4px' }}>Business Impact</strong>
                                             <span style={{ color: 'var(--text-secondary)' }}>{v.business_impact || 'Degraded performance or security.'}</span>
                                         </div>
-                                        <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '6px', border: '1px solid #fecaca' }}>
-                                            <strong style={{ color: '#ef4444', display: 'block', marginBottom: '4px' }}>Required Fix</strong>
+                                        <div style={{ backgroundColor: 'rgba(0,0,0,0.1)', padding: '10px', borderRadius: '6px', border: '1px solid var(--error-border)' }}>
+                                            <strong style={{ color: 'var(--error-text)', display: 'block', marginBottom: '4px' }}>Required Fix</strong>
                                             <span style={{ color: 'var(--text-secondary)' }}>{v.recommended_action || 'Update component.'}</span>
                                         </div>
                                     </div>
@@ -118,7 +118,7 @@ const ComponentModal = () => {
                             ))}
                         </div>
                     ) : (
-                        <div style={{ padding: '30px', textAlign: 'center', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px dashed #bbf7d0', color: '#166534', marginBottom: '20px' }}>
+                        <div style={{ padding: '30px', textAlign: 'center', backgroundColor: 'var(--success-bg)', borderRadius: '8px', border: '1px dashed var(--success-border)', color: 'var(--success-text)', marginBottom: '20px' }}>
                             <div style={{ fontSize: '32px', marginBottom: '10px' }}>✅</div>
                             <h3 style={{ margin: '0 0 5px 0' }}>Component is Healthy</h3>
                             <p style={{ margin: 0, fontSize: '14px', opacity: 0.8 }}>No compatibility issues or policy violations were detected for this component.</p>

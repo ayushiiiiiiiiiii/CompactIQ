@@ -71,7 +71,7 @@ const GraphView = () => {
     }, [activeGraphData, filter, selectedNodeId]);
 
     if (!activeGraphData || !activeGraphData.elements) {
-        return <div style={{ padding: '20px', color: '#64748b' }}>No graph data available. Please ensure the scan has completed.</div>;
+        return <div style={{ padding: '20px', color: 'var(--text-secondary)' }}>No graph data available. Please ensure the scan has completed.</div>;
     }
 
     const onNodeClick = (e, node) => {
@@ -96,13 +96,13 @@ const GraphView = () => {
         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', animation: 'fadeIn 0.5s ease-in' }}>
             <ComponentModal />
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--card-border)', paddingBottom: '15px', marginBottom: '20px' }}>
                 <div>
-                    <h1 style={{ margin: '0 0 5px 0', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <h1 style={{ margin: '0 0 5px 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <Link to={backLink} style={{ color: '#0076CE', textDecoration: 'none', fontSize: '16px' }}>{backLabel}</Link>
                         Knowledge Graph Explorer
                     </h1>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
+                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px' }}>
                         Visualizing dependency chains and compatibility logic.
                     </p>
                 </div>
@@ -111,24 +111,24 @@ const GraphView = () => {
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <button 
                         onClick={() => setFilter('ALL')}
-                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: filter === 'ALL' ? '#e2e8f0' : '#fff', cursor: 'pointer' }}
+                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--card-border)', background: filter === 'ALL' ? 'var(--card-border)' : 'var(--card-bg)', color: 'var(--text-primary)', cursor: 'pointer' }}
                     >All Components</button>
                     <button 
                         onClick={() => setFilter('VIOLATIONS')}
-                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #fca5a5', background: filter === 'VIOLATIONS' ? '#fee2e2' : '#fff', cursor: 'pointer', color: '#b91c1c' }}
+                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--error-border)', background: filter === 'VIOLATIONS' ? 'var(--error-bg)' : 'var(--card-bg)', cursor: 'pointer', color: 'var(--error-text)' }}
                     >Violations Only</button>
                     <button 
                         onClick={() => setFilter('HEALTHY')}
-                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #86efac', background: filter === 'HEALTHY' ? '#dcfce3' : '#fff', cursor: 'pointer', color: '#15803d' }}
+                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--success-border)', background: filter === 'HEALTHY' ? 'var(--success-bg)' : 'var(--card-bg)', cursor: 'pointer', color: 'var(--success-text)' }}
                     >Healthy Only</button>
                     <button 
                         onClick={() => { setFilter('ALL'); setSelectedNodeId(null); }}
-                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#f8fafc', cursor: 'pointer', marginLeft: '10px' }}
+                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', cursor: 'pointer', marginLeft: '10px' }}
                     >Reset Graph</button>
                 </div>
             </div>
 
-            <div style={{ flex: 1, backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'hidden', position: 'relative' }}>
+            <div style={{ flex: 1, backgroundColor: 'var(--bg-color)', borderRadius: '12px', border: '1px solid var(--card-border)', boxShadow: 'var(--shadow)', overflow: 'hidden', position: 'relative' }}>
                 <ReactFlow 
                     nodes={nodes} 
                     edges={edges} 
@@ -141,45 +141,45 @@ const GraphView = () => {
                     <Controls />
                     
                     {/* Legend Panel */}
-                    <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10, backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', fontSize: '12px' }}>
-                        <strong style={{ color: '#1e293b', display: 'block', marginBottom: '10px' }}>Graph Legend</strong>
+                    <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10, backgroundColor: 'var(--glass-bg)', padding: '15px', borderRadius: '8px', border: '1px solid var(--card-border)', boxShadow: 'var(--shadow)', fontSize: '12px' }}>
+                        <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '10px' }}>Graph Legend</strong>
                         
                         <div style={{ marginBottom: '15px' }}>
-                            <div style={{ color: '#475569', marginBottom: '5px', fontWeight: 'bold' }}>Component Health</div>
+                            <div style={{ color: 'var(--text-secondary)', marginBottom: '5px', fontWeight: 'bold' }}>Component Health</div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                                 <div style={{ width: '12px', height: '12px', backgroundColor: '#f0fdf4', border: '2px solid #10b981', borderRadius: '2px' }}></div>
-                                <span style={{ color: '#334155' }}>Healthy / Compliant</span>
+                                <span style={{ color: 'var(--text-primary)' }}>Healthy / Compliant</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                                 <div style={{ width: '12px', height: '12px', backgroundColor: '#fffbeb', border: '2px solid #f59e0b', borderRadius: '2px' }}></div>
-                                <span style={{ color: '#334155' }}>Warning / Needs Attention</span>
+                                <span style={{ color: 'var(--text-primary)' }}>Warning / Needs Attention</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                                 <div style={{ width: '12px', height: '12px', backgroundColor: '#fef2f2', border: '2px solid #ef4444', borderRadius: '2px' }}></div>
-                                <span style={{ color: '#334155' }}>Violation / Conflict Present</span>
+                                <span style={{ color: 'var(--text-primary)' }}>Violation / Conflict Present</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <div style={{ width: '12px', height: '12px', backgroundColor: '#fff', border: '2px dashed #f59e0b', borderRadius: '2px' }}></div>
-                                <span style={{ color: '#334155' }}>Missing Dependency</span>
+                                <span style={{ color: 'var(--text-primary)' }}>Missing Dependency</span>
                             </div>
                         </div>
 
                         <div>
-                            <div style={{ color: '#475569', marginBottom: '5px', fontWeight: 'bold' }}>Relationships</div>
+                            <div style={{ color: 'var(--text-secondary)', marginBottom: '5px', fontWeight: 'bold' }}>Relationships</div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                                 <div style={{ width: '20px', height: '2px', backgroundColor: '#3b82f6' }}></div>
-                                <span style={{ color: '#334155' }}>REQUIRES / DEPENDS_ON</span>
+                                <span style={{ color: 'var(--text-primary)' }}>REQUIRES / DEPENDS_ON</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                                 <div style={{ width: '20px', height: '2px', backgroundColor: '#ef4444' }}></div>
-                                <span style={{ color: '#334155' }}>INCOMPATIBLE_WITH</span>
+                                <span style={{ color: 'var(--text-primary)' }}>INCOMPATIBLE_WITH</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <div style={{ width: '20px', height: '2px', backgroundColor: '#cbd5e1', borderTop: '2px dashed #cbd5e1' }}></div>
-                                <span style={{ color: '#334155' }}>HAS_COMPONENT</span>
+                                <span style={{ color: 'var(--text-primary)' }}>HAS_COMPONENT</span>
                             </div>
                         </div>
-                        <div style={{ marginTop: '10px', fontStyle: 'italic', color: '#64748b' }}>
+                        <div style={{ marginTop: '10px', fontStyle: 'italic', color: 'var(--text-secondary)' }}>
                             Click a node to highlight chain.
                         </div>
                     </div>

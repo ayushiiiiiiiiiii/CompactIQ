@@ -109,13 +109,13 @@ const KnowledgeBaseAdmin = () => {
             </div>
 
             {successMessage && (
-                <div style={{ padding: '16px', backgroundColor: 'rgba(74, 222, 128, 0.1)', borderLeft: '4px solid #4ade80', borderRadius: '4px', marginBottom: '24px', color: '#4ade80' }}>
+                <div style={{ padding: '16px', backgroundColor: 'var(--success-bg)', borderLeft: '4px solid var(--success-border)', borderRadius: '4px', marginBottom: '24px', color: 'var(--success-text)' }}>
                     {successMessage}
                 </div>
             )}
 
             {error && !isModalOpen && (
-                <div style={{ padding: '16px', backgroundColor: 'rgba(248, 113, 113, 0.1)', borderLeft: '4px solid #f87171', borderRadius: '4px', marginBottom: '24px', color: '#f87171' }}>
+                <div style={{ padding: '16px', backgroundColor: 'var(--error-bg)', borderLeft: '4px solid var(--error-border)', borderRadius: '4px', marginBottom: '24px', color: 'var(--error-text)' }}>
                     {error}
                 </div>
             )}
@@ -156,8 +156,8 @@ const KnowledgeBaseAdmin = () => {
                                                 borderRadius: '12px', 
                                                 fontSize: '12px', 
                                                 fontWeight: '600',
-                                                backgroundColor: doc.status === 'completed' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)',
-                                                color: doc.status === 'completed' ? '#4ade80' : '#f87171'
+                                                backgroundColor: doc.status === 'completed' ? 'var(--success-bg)' : 'var(--error-bg)',
+                                                color: doc.status === 'completed' ? 'var(--success-text)' : 'var(--error-text)'
                                             }}>
                                                 {doc.status.toUpperCase()}
                                             </span>
@@ -169,7 +169,7 @@ const KnowledgeBaseAdmin = () => {
                                                 style={{ 
                                                     background: 'none', 
                                                     border: 'none', 
-                                                    color: '#f87171', 
+                                                    color: 'var(--error-text)', 
                                                     cursor: 'pointer',
                                                     display: 'inline-flex',
                                                     alignItems: 'center',
@@ -178,7 +178,7 @@ const KnowledgeBaseAdmin = () => {
                                                     borderRadius: '4px',
                                                     transition: 'background-color 0.2s'
                                                 }}
-                                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(248, 113, 113, 0.1)'}
+                                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--error-bg)'}
                                                 onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                             >
                                                 <Trash2 size={16} /> Remove
@@ -213,7 +213,7 @@ const KnowledgeBaseAdmin = () => {
                         fontWeight: '600',
                         transition: 'all 0.2s'
                     }}
-                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fbbf24'; e.currentTarget.style.color = '#000'; }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fbbf24'; e.currentTarget.style.color = 'var(--bg-color)'; }}
                     onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#fbbf24'; }}
                 >
                     Flush Compatibility Database
@@ -225,7 +225,7 @@ const KnowledgeBaseAdmin = () => {
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
                     <div className="glass-card" style={{ width: '100%', maxWidth: '450px', padding: '24px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                            <h3 style={{ margin: 0, fontSize: '18px', color: '#f87171', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--error-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <AlertTriangle size={20} />
                                 {modalConfig.title}
                             </h3>
@@ -239,7 +239,7 @@ const KnowledgeBaseAdmin = () => {
                         </p>
 
                         {error && isModalOpen && (
-                            <div style={{ padding: '12px', backgroundColor: 'rgba(248, 113, 113, 0.1)', borderRadius: '4px', marginBottom: '16px', color: '#f87171', fontSize: '14px' }}>
+                            <div style={{ padding: '12px', backgroundColor: 'var(--error-bg)', borderRadius: '4px', marginBottom: '16px', color: 'var(--error-text)', fontSize: '14px' }}>
                                 {error}
                             </div>
                         )}
@@ -267,7 +267,7 @@ const KnowledgeBaseAdmin = () => {
                             <button 
                                 onClick={handleConfirm}
                                 disabled={isSubmitting || !password}
-                                style={{ padding: '8px 16px', backgroundColor: '#f87171', border: 'none', color: '#fff', borderRadius: '6px', cursor: isSubmitting || !password ? 'not-allowed' : 'pointer', opacity: isSubmitting || !password ? 0.7 : 1 }}
+                                style={{ padding: '8px 16px', backgroundColor: 'var(--error-border)', border: 'none', color: 'white', borderRadius: '6px', cursor: isSubmitting || !password ? 'not-allowed' : 'pointer', opacity: isSubmitting || !password ? 0.7 : 1 }}
                             >
                                 {isSubmitting ? "Processing..." : (modalConfig.actionType === "REMOVE_DOC" ? "Confirm Removal" : "Flush Database")}
                             </button>

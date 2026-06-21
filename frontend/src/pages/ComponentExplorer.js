@@ -30,12 +30,12 @@ const ComponentExplorer = () => {
     return (
         <div style={{ animation: 'fadeIn 0.5s ease-in' }}>
             <ComponentModal />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--card-border)', paddingBottom: '15px', marginBottom: '20px' }}>
                 <div>
-                    <h1 style={{ margin: 0, color: '#1e293b' }}>Component Health Explorer</h1>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '14px', marginTop: '5px' }}>Detailed inspection of all discovered hardware and software components.</p>
+                    <h1 style={{ margin: 0, color: 'var(--text-primary)' }}>Component Health Explorer</h1>
+                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px', marginTop: '5px' }}>Detailed inspection of all discovered hardware and software components.</p>
                 </div>
-                <div style={{ fontSize: '14px', color: '#64748b' }}>
+                <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
                     Total Components: <strong style={{ color: '#0076CE' }}>{nodes.filter(n => n.id !== 'endpoint-device').length}</strong>
                 </div>
             </div>
@@ -55,8 +55,8 @@ const ComponentExplorer = () => {
                             key={i} 
                             onClick={() => openModalFor(node.id)}
                             style={{ 
-                                backgroundColor: 'white', borderRadius: '10px', border: `1px solid ${tileColor}`,
-                                padding: '18px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                                backgroundColor: 'var(--card-bg)', borderRadius: '10px', border: `1px solid ${tileColor}`,
+                                padding: '18px', cursor: 'pointer', boxShadow: 'var(--shadow)',
                                 transition: 'transform 0.2s, box-shadow 0.2s', borderLeftWidth: '5px',
                                 display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '110px'
                             }}
@@ -64,10 +64,10 @@ const ComponentExplorer = () => {
                             onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.02)'; }}
                         >
                             <div>
-                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e293b', marginBottom: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {node.data.componentName || node.id}
                                 </div>
-                                <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '15px' }}>
+                                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '15px' }}>
                                     v{node.data.version || 'Unknown'}
                                 </div>
                             </div>
@@ -75,7 +75,7 @@ const ComponentExplorer = () => {
                                 <span style={{ backgroundColor: tileBg, color: tileColor, padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>
                                     {node.data.status}
                                 </span>
-                                <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '500' }}>
+                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500' }}>
                                     {dependencyCount} Dep
                                 </span>
                             </div>
