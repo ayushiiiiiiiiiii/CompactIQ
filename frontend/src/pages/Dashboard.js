@@ -147,17 +147,17 @@ const Dashboard = () => {
                     <h3 style={{ margin: '0 0 20px 0', color: '#f8fafc', borderBottom: '1px solid #334155', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ fontSize: '20px' }}>🛠</span> Recommended Resolution Path
                     </h3>
-                    <div style={{ display: 'flex', alignItems: 'center', overflowX: 'auto', paddingBottom: '15px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', overflowX: 'auto', paddingTop: '15px', paddingBottom: '15px' }}>
                         {complianceResult.remediation.roadmap.map((step, idx) => (
                             <React.Fragment key={idx}>
                                 <div style={{ 
-                                    minWidth: '200px', backgroundColor: '#1e293b', border: '1px solid #334155', 
+                                    minWidth: '220px', backgroundColor: '#1e293b', border: '1px solid #334155', 
                                     borderRadius: '8px', padding: '15px', position: 'relative'
                                 }}>
                                     <div style={{ position: 'absolute', top: '-10px', left: '15px', backgroundColor: '#0076CE', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
                                         Step {idx + 1}
                                     </div>
-                                    <p style={{ margin: '10px 0 0 0', fontSize: '14px', color: '#cbd5e1', lineHeight: '1.4' }}>{step}</p>
+                                    <p style={{ margin: '10px 0 0 0', fontSize: '15px', color: '#cbd5e1', lineHeight: '1.5' }}>{step}</p>
                                 </div>
                                 {idx < complianceResult.remediation.roadmap.length - 1 && (
                                     <div style={{ color: '#0076CE', fontSize: '24px', margin: '0 15px' }}>&rarr;</div>

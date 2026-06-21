@@ -29,8 +29,34 @@ class GraphService:
                     return c
             return None
 
-        # Process each rule against the actual device components
+        # Deduplicate rules to keep only the strictest constraint per component pair
+        unique_rules_map = {}
         for rule in self.rules:
+            sig = (rule.source_component_type, rule.target_component_type, rule.rule_type)
+            if sig not in unique_rules_map:
+                unique_rules_map[sig] = rule
+            else:
+                existing_rule = unique_rules_map[sig]
+                if rule.rule_type == "REQUIRES":
+                    v_existing = parse_version(existing_rule.target_min_version)
+                    v_new = parse_version(rule.target_min_version)
+                    if v_new > v_existing:
+                        unique_rules_map[sig] = rule
+                elif rule.rule_type == "INCOMPATIBLE_WITH":
+                    # For incompatible, a lower version limit is stricter (less tolerant)
+                    # But if one is None, it means totally incompatible, which is strictest
+                    if rule.incompatible_version is None:
+                        unique_rules_map[sig] = rule
+                    elif existing_rule.incompatible_version is not None:
+                        v_existing = parse_version(existing_rule.incompatible_version)
+                        v_new = parse_version(rule.incompatible_version)
+                        if v_new < v_existing:
+                            unique_rules_map[sig] = rule
+
+        processed_rules = list(unique_rules_map.values())
+
+        # Process each rule against the actual device components
+        for rule in processed_rules:
             src_comp = get_comp(rule.source_component_type)
             if not src_comp:
                 continue # Rule doesn't apply if source component is missing
