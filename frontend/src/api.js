@@ -38,3 +38,18 @@ export const uploadDocument = async (file) => {
     });
     return response.data;
 };
+
+export const getDocumentsList = async () => {
+    const response = await axios.get(`${API_BASE}/documents/`);
+    return response.data;
+};
+
+export const removeDocument = async (document_id, password) => {
+    const response = await axios.post(`${API_BASE}/documents/${document_id}/remove`, { password });
+    return response.data;
+};
+
+export const flushDatabase = async (password) => {
+    const response = await axios.post(`${API_BASE}/admin/flush`, { password });
+    return response.data;
+};

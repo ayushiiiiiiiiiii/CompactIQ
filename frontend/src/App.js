@@ -9,6 +9,7 @@ import DocumentUpload from './pages/DocumentUpload';
 import LandingPage from './pages/LandingPage';
 import RulesMatrix from './pages/RulesMatrix';
 import ComponentExplorer from './pages/ComponentExplorer';
+import KnowledgeBaseAdmin from './pages/KnowledgeBaseAdmin';
 import { Sun, Moon, Database, UploadCloud, Monitor, Network, Table } from 'lucide-react';
 import { AppContext } from './context/AppContext';
 import { submitInventory, getCompliance } from './api';
@@ -39,6 +40,7 @@ const AdminLayout = ({ theme, toggleTheme }) => {
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <li><Link to="/admin/ingest" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><UploadCloud size={18} /> Document Ingestion</Link></li>
           <li><Link to="/admin/rules" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Table size={18} /> Rules Matrix</Link></li>
+          <li><Link to="/admin/kb-admin" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Database size={18} /> KB Admin</Link></li>
         </ul>
         
         <div style={{ marginTop: 'auto', padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '12px' }}>
@@ -217,6 +219,7 @@ function App() {
         <Route path="/admin" element={<AdminLayout theme={theme} toggleTheme={toggleTheme} />}>
           <Route path="ingest" element={<DocumentUpload />} />
           <Route path="rules" element={<RulesMatrix />} />
+          <Route path="kb-admin" element={<KnowledgeBaseAdmin />} />
         </Route>
         
         <Route path="/client" element={<ClientLayout theme={theme} toggleTheme={toggleTheme} />}>

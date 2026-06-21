@@ -1,9 +1,0 @@
-Tanium Client 7.5 Compatibility Bulletin
-Release Date: 2026-03-01
-
-Summary:
-The Tanium Client v7.5 is now generally available. 
-
-Known Issues & Incompatibilities:
-1. Systems running Dell BIOS versions < 1.15.0 may experience high API polling latency. Please upgrade to BIOS 1.15.0 or higher.
-2. Security Agent version 7.17 has a known network hook collision with Intel NIC driver versions 22.0 and below. It is highly recommended to upgrade to Intel NIC driver version 23.0.

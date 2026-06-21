@@ -1,110 +1,105 @@
-# CompactIQ - Codebase Working Details
+# CompactIQ Working Documentation
 
-This document explains the inner workings of the CompactIQ application, detailing what each code file does, the technologies used for data extraction, the compliance checking methodology, and a flowchart illustrating the application's execution path.
+## 1. Project File Dictionary
 
-## 1. What Each Code File is Doing
+This section explicitly documents the purpose of **each and every file** in the repository.
 
-### Backend (`/backend/app`)
+### Root Directory
+* **`.gitignore`**: Defines files and directories that Git should ignore (e.g., `node_modules`, `venv`, `.env`, database files).
+* **`architecture.md`**: Provides high-level documentation on the system architecture, design patterns, and deployment strategies.
+* **`package-lock.json`**: The npm lockfile for root-level scripts or monolithic project dependencies (if applicable).
+* **`README.md`**: The primary entry point for the repository, containing setup instructions, overviews, and how to run the project.
+* **`working.md`**: This living documentation file, explaining the internal working logic of the application.
 
-*   **`main.py`**: The main entry point for the FastAPI backend. It initializes the application, configures CORS, triggers the database schema creation on startup, automatically loads seed documents into the system, and mounts the API routers under `/api/v1`.
-*   **`api/v1/api.py`**: The central router aggregator. It bundles the individual endpoint routers (`inventory`, `documents`, `chat`) into a single API router.
-*   **`api/v1/endpoints/chat.py`** ⚠️ **[MOCK DATA]**: Exposes the `/chat` endpoint. Currently, this returns a mocked, hardcoded AI response explaining why an endpoint is non-compliant rather than calling a real LLM.
-*   **`api/v1/endpoints/documents.py`**: Exposes the `/documents/ingest` and `/documents/` endpoints. It handles the uploading of compatibility documents (saving them to the seed directory) and triggers the ingestion and rule extraction pipeline.
-*   **`api/v1/endpoints/inventory.py`** ⚙️ **[REAL CALCULATION] & ⚠️ [MOCK DATA]**: The core endpoint for device compliance. 
-    *   `POST /inventory/`: Receives scanned device inventory, triggers the real compliance validation engine (`graph_service.py`), updates the database, and returns violations. *Note: The remediation steps returned are currently mocked data.*
-    *   `GET /inventory/{device_id}`: Retrieves previous scan results and compliance state from the database.
-    *   `GET /inventory/graph/elements`: ⚙️ **[REAL CALCULATION]**: Uses the `graph_service` to dynamically calculate graph node positions and dependency chains for the frontend.
-*   **`core/config.py`**: Manages environment variables and application settings (like database URLs and seed paths).
-*   **`db/database.py`**: Sets up the asynchronous SQLAlchemy database engine and session maker.
-*   **`models/models.py`**: Defines the SQLAlchemy ORM models representing the database schema: `Device`, `DeviceComponent`, `Document`, and `Rule`.
-*   **`schemas/schemas.py`**: Defines the Pydantic data schemas used to validate incoming API requests and format outgoing JSON responses.
-*   **`services/document_ingestion.py`** ⚠️ **[MOCK DATA]**: Responsible for processing uploaded documents. While it extracts raw text genuinely using `PyMuPDF`, the `extract_rules_from_text` function relies on mocked, hardcoded list appends to generate dependency rules, simulating what a real LLM would extract.
-*   **`services/graph_service.py`** ⚙️ **[REAL CALCULATION]**: Contains the core logic of the **Compliance Engine**. It uses the `networkx` library to build a real Directed Graph out of the extracted rules and dynamically calculates compliance (`validate_device()`), deducting points and returning mathematically accurate violation chains.
+### Backend (`/backend`)
+#### Root Level
+* **`.env`**: Contains sensitive environment variables, specifically the `GEMINI_API_KEY` for LLM operations and `ADMIN_MAINTENANCE_PASSWORD` for secure Knowledge Base Administration.
+* **`compliance.db`**: The production SQLite database storing devices, components, documents, and rules.
+* **`requirements.txt`**: Python dependencies required for the backend (FastAPI, SQLAlchemy, google-generativeai, etc.).
+* **`sqlite.db`**: An older or alternative local SQLite database file, possibly left over from early development or testing.
+
+#### App Core (`/backend/app`)
+* **`main.py`**: The entry point for the FastAPI application. It mounts routers, handles CORS, and executes the `startup_event` (which triggers automatic document ingestion).
+* **`core/config.py`**: Defines the `Settings` class (using Pydantic). It loads variables from `.env` and sets up database URIs and seed directory paths.
+* **`db/database.py`**: Configures the SQLAlchemy asynchronous engine and `sessionmaker`. It also exports the `get_db` dependency injection function used by routers.
+* **`models/models.py`**: Defines the SQLAlchemy ORM models (`Device`, `DeviceComponent`, `Document`, `Rule`) that map to the SQLite tables.
+* **`schemas/schemas.py`**: Defines the Pydantic schemas (e.g., `OSInfo`, `InventoryRequest`, `AdminActionRequest`) used for input validation and JSON response formatting.
+
+#### API Endpoints (`/backend/app/api/v1`)
+* **`api.py`**: The main API router that mounts all sub-routers (inventory, documents, chat, admin) under `/api/v1`.
+* **`endpoints/admin.py`**: Provides the secure `/flush` endpoint for administrators to wipe the database.
+* **`endpoints/chat.py`**: Provides the `/chat` endpoint for the generative AI assistant, contextualized by a specific device's compliance scan.
+* **`endpoints/documents.py`**: Handles manual document ingestion via PDF/TXT uploads (`/ingest`), listing ingested documents (`/`), and secure document removal (`/{id}/remove`).
+* **`endpoints/inventory.py`**: Handles incoming device scans (`/`), retrieves existing scans (`/{device_id}`), and lists all global rules (`/rules`).
+
+#### Services (`/backend/app/services`)
+* **`document_ingestion.py`**: Contains the core logic for the Dynamic Compatibility Engine. It extracts text from PDFs/TXTs, queries the Gemini LLM for compatibility rules, parses the JSON response, and persists the `Rule` and `Document` records to the database. It also handles idempotent startup ingestion.
+* **`graph_service.py`**: An unfinished or secondary service meant for analyzing component relationships as a direct graph.
+
+#### Scripts (`/backend/scripts`)
+* **`__init__.py`**: Makes the scripts directory a Python module.
+* **`flush_db.py`**: A utility script (and function `flush_database`) that truncates all database tables (devices, components, documents, rules) to reset the system state.
+
+#### Seeds (`/backend/seeds`)
+* **`mock_inventory.json`**: Static JSON containing mock hardware inventory for testing.
+* **`mock_rules.json`**: Static JSON containing legacy hardcoded rules.
+* **`compatibility_docs/`**: The seed directory for the Dynamic Compatibility Engine. It contains physical PDF and TXT documents (e.g., `CrowdStrike-Falcon-Sensor-7.18-Release-Notes.pdf`, `Tanium-Client-7.5-Compatibility-Bulletin.txt`) that are ingested into the database on startup.
 
 ### Frontend (`/frontend`)
+#### Root & Public
+* **`package.json` & `package-lock.json`**: Defines React dependencies, Electron dependencies, and build scripts.
+* **`public/electron.js`**: The Electron main process script. It launches the desktop window and sets up IPC handlers.
+* **`public/index.html`**: The main HTML template for the React application.
+* **`public/preload.js`**: The Electron preload script. It safely exposes the `window.electron` API (including `scanSystem`) to the React frontend.
+* **`public/scan.ps1`**: A PowerShell script executed by Electron to gather local hardware and software inventory from the host Windows machine.
 
-*   **`public/electron.js`** & **`public/preload.js`**: Handle native OS window creation, desktop security contexts, and expose an IPC bridge so React can securely run native commands.
-*   **`public/scan.ps1`** ⚙️ **[REAL DATA/CALCULATION]**: A native PowerShell script that executes real, low-level WMI/CIM queries on the host OS to extract genuine hardware and software inventory data.
-*   **`src/api.js`**: An Axios-based HTTP client containing all helper functions for React to communicate with the FastAPI backend.
-*   **`src/App.js`**: The main React component handling the sidebar layout and `react-router-dom` navigation routing.
-*   **`src/index.js`**: The standard React entry point that mounts the application to the HTML DOM.
-*   **`src/index.css`**: Contains global CSS variables, custom themes, layout utility classes, and keyframe animations.
-*   **`src/context/AppContext.js`**: React Context provider managing global application state, including graph node datasets and UI modal toggles.
-*   **`src/components/ComponentModal.js`** ⚙️ **[REAL CALCULATION]**: Renders the detailed view of a selected graph node, dynamically parsing the NetworkX backend output to accurately calculate and display its explicit upstream and downstream dependency chains.
-*   **`src/pages/Dashboard.js`**: The primary end-user interface. Features the validation check button, triggering the real local `scan.ps1` and visualizing the resulting compliance score, system inventory, and violations.
-*   **`src/pages/DocumentUpload.js`** ⚠️ **[MOCK DATA]**: UI for uploading PDFs. Contains a simulated, hardcoded animated terminal sequence designed to fake the process of LLM semantic extraction.
-*   **`src/pages/GraphView.js`**: The primary IT Admin view rendering the interactive **Compatibility Knowledge Graph** using `react-flow-renderer`, visualizing deep transitive dependencies and conflicts based on coordinates calculated by the backend.
-*   **`src/pages/ComponentExplorer.js`**: An IT Admin UI rendering a searchable, tabular list of all recognized components in the system.
-*   **`src/pages/RulesMatrix.js`**: An IT Admin UI displaying the active compliance and conflict rules ingested into the database.
-*   **`src/pages/LandingPage.js`**: The initial splash screen allowing the user to select between the "IT Administrative Console" and the "Client Device Portal".
+#### React Source (`/frontend/src`)
+* **`index.js`**: The React entry point that renders the `App` component into the DOM.
+* **`index.css`**: Global CSS file containing all styling, custom properties (CSS variables), glassmorphism effects, and terminal animations.
+* **`App.js`**: The React Router configuration. It defines the layout shells (`AdminLayout` and `ClientLayout`) and maps URLs to specific pages.
+* **`api.js`**: An Axios wrapper containing all frontend-to-backend API calls (`submitInventory`, `getCompliance`, `getDocumentsList`, `uploadDocument`, etc.).
+* **`context/AppContext.js`**: React Context provider for managing global application state (loading status, phase index, compliance results, graph data) across all components.
 
----
-
-## 2. Mock Data vs. Real Logic Boundary
-
-It is important to understand where the system fakes functionality for demonstration (MVP) versus where it performs genuine computational logic.
-
-### Where Mock Data is Used ⚠️
-*   **Rule Extraction (`services/document_ingestion.py`)**: Instead of a real LLM reading the PDFs and dynamically outputting relationships, the system relies on hardcoded rules appended to a list to simulate the extraction process.
-*   **AI Explanations (`api/v1/endpoints/chat.py`)**: The chat assistant returns a static, hardcoded string.
-*   **Remediation Scripts (`api/v1/endpoints/inventory.py`)**: The auto-remediation bash/PowerShell scripts returned to the user are static strings, not dynamically synthesized fixes.
-
-### Where Real Calculation is Done ⚙️
-*   **Device Scanning (`public/scan.ps1`)**: The inventory retrieved from the Windows machine is 100% real.
-*   **Compliance Validation (`services/graph_service.py`)**: The engine genuinely processes the inventory against the rules. If a rule demands BIOS > 1.15 and the real scan shows BIOS 1.10, the engine performs a real mathematical calculation to flag the violation and dock points.
-*   **Topological Graphing (`services/graph_service.py`)**: The `networkx` algorithms calculate genuine transitive dependency paths and generation depths, which are accurately rendered by the React frontend.
+#### Components & Pages (`/frontend/src/pages` & `/frontend/src/components`)
+* **`components/ComponentModal.js`**: A modal component to display detailed information about a specific hardware/software component when clicked.
+* **`pages/LandingPage.js`**: The role-selection screen (Admin vs Client).
+* **`pages/Dashboard.js`**: The primary "My Device Scan" client page. It displays the compliance score, status, and any violations found for the scanned machine.
+* **`pages/ComponentExplorer.js`**: A client page displaying a tabular list of all components detected on the machine.
+* **`pages/GraphView.js`**: A React Flow implementation rendering a visual Knowledge Graph of components and their relationships/violations.
+* **`pages/DocumentUpload.js`**: An admin page providing a drag-and-drop interface for manually uploading new compatibility PDFs.
+* **`pages/KnowledgeBaseAdmin.js`**: An admin dashboard page for managing ingested documents, removing records, and flushing the database securely.
+* **`pages/RulesMatrix.js`**: An admin page displaying all dynamically extracted compatibility rules globally known to the system.
 
 ---
 
-## 3. Compliance Engine Architecture
+## 2. Mock Data vs Real Logic Boundary
 
-**Yes, there is a separate, deterministic compliance engine.** The compliance evaluation is **not** offloaded to an LLM.
+It is crucial to understand which parts of the application use static mock data versus real, dynamic functionality.
 
-The compliance engine is built using a mathematical graph approach (located in `backend/app/services/graph_service.py`):
-1.  **Graph Construction**: The `GraphService` class uses the `networkx` library to build a Directed Graph (DiGraph). The nodes are software/hardware components, and the edges are the relationships defined by the rules (e.g., `REQUIRES`, `INCOMPATIBLE`).
-2.  **Validation Check**: When a device submits its inventory, the engine's `validate_device()` method loops through the device's components and compares them against the edges in the graph.
-3.  **Scoring & Violations**: If a component has an `INCOMPATIBLE` edge with another installed component, or lacks a target defined by a `REQUIRES` edge, the engine deterministically subtracts points from a base score of 100 and generates a detailed `Violation` report.
+### **Where Mock Data is Used**
+* **Frontend Graph Parsing fallback**: In earlier iterations, if `getCompliance` failed or `graph_elements` was not properly returned from the backend, the frontend might have fallen back to static nodes. However, currently, the graph is dynamically constructed by the backend in `inventory.py`.
+* **`mock_inventory.json` & `mock_rules.json`**: These files exist in the backend `seeds/` folder but **are no longer actively used by the core application workflow**. They are legacy artifacts from before the Gemini LLM integration was implemented.
+
+### **Where Real Data and Logic are Used**
+* **Device Scanning**: The frontend uses `scan.ps1` via Electron to gather **real hardware and OS data** from the host machine.
+* **Rule Ingestion**: The system reads **real PDF/TXT files** from the `compatibility_docs` folder, parses their exact text, and uses the **Gemini LLM API** to dynamically extract real rules.
+* **Compliance Calculation**: The backend endpoint `/api/v1/inventory/` accepts the real scan data, queries the database for dynamically extracted rules, and executes **real comparison logic** to generate violations and compliance scores.
+* **Database**: All operations interact with a real SQLite database (`compliance.db`), persisting real documents and real rules across sessions.
+* **Knowledge Base Admin**: Operations like removing documents or flushing the database perform **real SQL deletions** and **real filesystem `os.remove()`** operations.
 
 ---
 
-## 4. Application Flowchart
+## 3. Backend Components Never Used in the Frontend
 
-Below is a Mermaid flowchart depicting how the application components interact, starting from user interaction down to the database and back.
+To prevent confusion, the following backend components, endpoints, and functionalities exist exclusively for internal backend operations and are **never** called or consumed by the React frontend:
 
-```mermaid
-sequenceDiagram
-    participant User as User
-    participant React as React Frontend (Dashboard.js)
-    participant Electron as Electron Main Process
-    participant PowerShell as scan.ps1 (Host OS)
-    participant FastAPI as FastAPI Backend (inventory.py)
-    participant GraphEngine as Compliance Engine (GraphService)
-    participant DB as SQLite/Postgres DB
-
-    Note over User, React: Application Start & Initialization
-    FastAPI->>DB: App Startup: Initialize Schema
-    FastAPI->>FastAPI: Load & Ingest Seed PDFs (fitz)
-    FastAPI->>DB: Save Parsed Rules
-    
-    User->>React: Clicks "Run Validation Check"
-    React->>Electron: window.electron.scanSystem() via IPC
-    Electron->>PowerShell: Execute scan.ps1
-    PowerShell-->>Electron: Return JSON System Inventory
-    Electron-->>React: Return Inventory Data
-    
-    React->>FastAPI: POST /api/v1/inventory/ (Submit Inventory)
-    FastAPI->>DB: Fetch All Active Rules
-    DB-->>FastAPI: Return Rules
-    
-    FastAPI->>GraphEngine: build_graph_from_rules(Rules)
-    Note right of GraphEngine: NetworkX DiGraph Created
-    
-    FastAPI->>GraphEngine: validate_device(Components)
-    Note right of GraphEngine: Checks components against edges
-    GraphEngine-->>FastAPI: Return Score & Violations
-    
-    FastAPI->>DB: Save/Update Device, Components, Score
-    FastAPI-->>React: Return ComplianceResponse JSON
-    
-    React-->>User: Render Score, Violations & Remediation
-```
+1. **`load_and_ingest_seeds()`** (in `document_ingestion.py`):
+   * This function is triggered internally by `main.py` on FastAPI startup. It traverses the physical seed directory and ingests new PDFs without any frontend initiation.
+2. **`settings.SEED_DIR` & `os.listdir`**:
+   * The frontend has zero knowledge of the physical seed directory. It only interacts with the `documents` database table via the `GET /api/v1/documents/` endpoint.
+3. **`ADMIN_MAINTENANCE_PASSWORD` configuration value**:
+   * The actual password value is strictly stored in `.env` and `config.py` on the backend. The frontend only provides a blank input field for the user to type into; it never hardcodes or checks the password locally.
+4. **`scripts/flush_db.py`**:
+   * The raw Python script is an administrative utility. The frontend only touches it indirectly by calling the `/api/v1/admin/flush` API endpoint.
+5. **Raw Database Models (`models.py`)**:
+   * The frontend never sees SQLAlchemy models. It only ever receives the serialized JSON structures defined in `schemas.py`.

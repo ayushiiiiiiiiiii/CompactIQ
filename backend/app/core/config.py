@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     
     # Gemini
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    
+    # Security
+    ADMIN_MAINTENANCE_PASSWORD: str = os.getenv("ADMIN_MAINTENANCE_PASSWORD", "admin123")
 
     # Paths
     # Documents are automatically loaded from the compatibility_docs seed directory. 
