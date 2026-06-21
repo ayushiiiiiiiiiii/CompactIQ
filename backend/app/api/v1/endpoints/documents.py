@@ -24,7 +24,7 @@ async def upload_document(file: UploadFile = File(...), db: AsyncSession = Depen
 
     # Trigger the real document ingestion and rule extraction
     from app.services.document_ingestion import ingest_document_file
-    doc_id = await ingest_document_file(file_location, file.filename)
+    doc_id, _ = await ingest_document_file(file_location, file.filename)
 
     return DocumentUploadResponse(
         task_id=f"doc-ingestion-task-{doc_id if doc_id else 'unknown'}",
