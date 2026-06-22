@@ -64,12 +64,5 @@ Once the scan is complete, the application renders the main dashboard.
     *   The nodes represent the software and hardware on your machine.
     *   The edges (lines connecting them) represent the rules. 
     *   If you failed compliance, you will literally see red, broken edges visually demonstrating the conflict or missing dependency!
-
-### Step 9: Ask the AI Assistant for Remediation
-1. Open the **AI Assistant / Chat** feature.
-2. **What you see:** A chat interface that is context-aware of your specific scan results.
-3. **Action:** Type something like: *"Why did my device fail compliance?"* or *"Give me a PowerShell script to update my Dell BIOS to the required version."*
-4. **What you see:** The Gemini AI will respond with highly accurate, contextual remediation steps based exactly on the rules you uploaded and the hardware you scanned.
-
 ---
 **Testing Complete!** You have now successfully seeded the AI knowledge graph and utilized it to perform an automated, intelligent endpoint compliance scan.
