@@ -1,21 +1,25 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+
 
 class OSInfo(BaseModel):
     name: str
     version: str
     hostname: Optional[str] = None
 
+
 class ComponentInfo(BaseModel):
     type: str
     vendor: str
     version: str
 
+
 class InventoryRequest(BaseModel):
     device_id: str
     os: OSInfo
     components: List[ComponentInfo]
+
 
 class Violation(BaseModel):
     severity: str
@@ -30,11 +34,13 @@ class Violation(BaseModel):
     business_impact: Optional[str] = None
     recommended_action: Optional[str] = None
 
+
 class Remediation(BaseModel):
     recommended_action: str
     safe_to_execute: bool
     simulated_script: str
     roadmap: Optional[List[str]] = None
+
 
 class ComplianceResponse(BaseModel):
     device_id: str
@@ -50,16 +56,20 @@ class ComplianceResponse(BaseModel):
     last_scanned: Optional[datetime] = None
     graph_elements: Optional[dict] = None
 
+
 class DocumentUploadResponse(BaseModel):
     task_id: str
     status: str
+
 
 class ChatRequest(BaseModel):
     device_id: str
     query: str
 
+
 class ChatResponse(BaseModel):
     answer: str
+
 
 class AdminActionRequest(BaseModel):
     password: str

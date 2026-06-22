@@ -17,17 +17,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.on_event("startup")
 async def startup_event():
     # Create tables if they do not exist
-    from app.db.database import engine, Base
     from app.db.database import engine, Base
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+
 @app.get("/")
 def root():
     return {"message": f"Welcome to the {settings.PROJECT_NAME} API"}
+
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
