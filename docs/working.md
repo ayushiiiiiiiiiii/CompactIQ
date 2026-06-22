@@ -19,18 +19,19 @@ This section explicitly documents the purpose of **each and every file** in the 
 * **`sqlite.db`**: An older or alternative local SQLite database file, possibly left over from early development or testing.
 
 #### App Core (`/backend/app`)
-* **`main.py`**: The entry point for the FastAPI application. It mounts routers, handles CORS, and executes the `startup_event` (which triggers automatic document ingestion).
-* **`core/config.py`**: Defines the `Settings` class (using Pydantic). It loads variables from `.env` and sets up database URIs and seed directory paths.
-* **`db/database.py`**: Configures the SQLAlchemy asynchronous engine and `sessionmaker`. It also exports the `get_db` dependency injection function used by routers.
+* **`main.py`**: The entry point for the FastAPI application. It mounts routers and handles CORS.
+* **`core/config.py`**: Defines the `Settings` class (using Pydantic). It loads variables from `.env` and sets up database URIs.
+* **`db/database.py`**: Configures the SQLAlchemy asynchronous engine and `sessionmaker`.
 * **`models/models.py`**: Defines the SQLAlchemy ORM models (`Device`, `DeviceComponent`, `Document`, `Rule`) that map to the SQLite tables.
-* **`schemas/schemas.py`**: Defines the Pydantic schemas (e.g., `OSInfo`, `InventoryRequest`, `AdminActionRequest`) used for input validation and JSON response formatting.
+* **`schemas/schemas.py`**: Defines the Pydantic schemas used for input validation and JSON response formatting.
 
-#### API Endpoints (`/backend/app/api/v1`)
-* **`api.py`**: The main API router that mounts all sub-routers (inventory, documents, chat, admin) under `/api/v1`.
-* **`endpoints/admin.py`**: Provides the secure `/flush` endpoint for administrators to wipe the database.
-* **`endpoints/chat.py`**: Provides the `/chat` endpoint for the generative AI assistant, contextualized by a specific device's compliance scan.
-* **`endpoints/documents.py`**: Handles manual document ingestion via PDF/TXT uploads (`/ingest`), listing ingested documents (`/`), and secure document removal (`/{id}/remove`).
-* **`endpoints/inventory.py`**: Handles incoming device scans (`/`), retrieves existing scans (`/{device_id}`), and lists all global rules (`/rules`).
+#### API Endpoints (`/backend/app/api`)
+* **`dependencies.py`**: Contains the dependency injection logic, like `get_db()`, used to pass database sessions to routers.
+* **`v1/api.py`**: The main API router that mounts all sub-routers (inventory, documents, chat, admin) under `/api/v1`.
+* **`v1/endpoints/admin.py`**: Provides the secure `/flush` endpoint for administrators to wipe the database.
+* **`v1/endpoints/chat.py`**: Provides the `/chat` endpoint for the generative AI assistant.
+* **`v1/endpoints/documents.py`**: Handles manual document ingestion via PDF uploads, listing documents, and secure removal.
+* **`v1/endpoints/inventory.py`**: Handles incoming device scans, retrieves existing scans, and lists all global rules.
 
 #### Services (`/backend/app/services`)
 * **`document_ingestion.py`**: Contains the core logic for the Dynamic Compatibility Engine. It extracts text from PDFs/TXTs, queries the Gemini LLM for compatibility rules, parses the JSON response, and persists the `Rule` and `Document` records to the database. It also handles idempotent startup ingestion.
@@ -40,10 +41,9 @@ This section explicitly documents the purpose of **each and every file** in the 
 * **`__init__.py`**: Makes the scripts directory a Python module.
 * **`flush_db.py`**: A utility script (and function `flush_database`) that truncates all database tables (devices, components, documents, rules) to reset the system state.
 
-#### Seeds (`/backend/seeds`)
-* **`mock_inventory.json`**: Static JSON containing mock hardware inventory for testing.
-* **`mock_rules.json`**: Static JSON containing legacy hardcoded rules.
-* **`compatibility_docs/`**: The seed directory for the Dynamic Compatibility Engine. It contains physical PDF and TXT documents (e.g., `CrowdStrike-Falcon-Sensor-7.18-Release-Notes.pdf`, `Tanium-Client-7.5-Compatibility-Bulletin.txt`) that are ingested into the database on startup.
+#### Testing Docs (`/Testing_docs`)
+* **`compatibility_docs/`**: A directory containing sample PDF compatibility documents that can be manually uploaded via the frontend to test the AI extraction flow.
+* **`mock_inventory.json` & `mock_rules.json`**: Legacy files kept for historical reference.
 
 ### Frontend (`/frontend`)
 #### Root & Public
@@ -54,14 +54,14 @@ This section explicitly documents the purpose of **each and every file** in the 
 * **`public/scan.ps1`**: A PowerShell script executed by Electron to gather local hardware and software inventory from the host Windows machine.
 
 #### React Source (`/frontend/src`)
-* **`index.js`**: The React entry point that renders the `App` component into the DOM.
-* **`index.css`**: Global CSS file containing all styling, custom properties (CSS variables), glassmorphism effects, and terminal animations.
-* **`App.js`**: The React Router configuration. It defines the layout shells (`AdminLayout` and `ClientLayout`) and maps URLs to specific pages.
-* **`api.js`**: An Axios wrapper containing all frontend-to-backend API calls (`submitInventory`, `getCompliance`, `getDocumentsList`, `uploadDocument`, etc.).
-* **`context/AppContext.js`**: React Context provider for managing global application state (loading status, phase index, compliance results, graph data) across all components.
+* **`index.js` & `index.css`**: React entry points and global styling.
+* **`App.js`**: React Router configuration and layout shells.
+* **`api/endpoints.js`**: An Axios wrapper containing all frontend-to-backend API calls (`submitInventory`, `getCompliance`, `uploadDocument`, etc.).
+* **`hooks/useDeviceScan.js`**: Custom React Hook containing the robust logic for the loading sequence, polling Electron for local hardware data, and communicating with the backend.
+* **`context/AppContext.js`**: React Context provider for managing global application state across all components.
 
 #### Components & Pages (`/frontend/src/pages` & `/frontend/src/components`)
-* **`components/ComponentModal.js`**: A modal component to display detailed information about a specific hardware/software component when clicked.
+* **`components/ui/ComponentModal.js`**: A modal component to display detailed information about a specific hardware/software component.
 * **`pages/LandingPage.js`**: The role-selection screen (Admin vs Client).
 * **`pages/Dashboard.js`**: The primary "My Device Scan" client page. It displays the compliance score, status, and any violations found for the scanned machine.
 * **`pages/ComponentExplorer.js`**: A client page displaying a tabular list of all components detected on the machine.
@@ -77,8 +77,7 @@ This section explicitly documents the purpose of **each and every file** in the 
 It is crucial to understand which parts of the application use static mock data versus real, dynamic functionality.
 
 ### **Where Mock Data is Used**
-* **Frontend Graph Parsing fallback**: In earlier iterations, if `getCompliance` failed or `graph_elements` was not properly returned from the backend, the frontend might have fallen back to static nodes. However, currently, the graph is dynamically constructed by the backend in `inventory.py`.
-* **`mock_inventory.json` & `mock_rules.json`**: These files exist in the backend `seeds/` folder but **are no longer actively used by the core application workflow**. They are legacy artifacts from before the Gemini LLM integration was implemented.
+* **`mock_inventory.json` & `mock_rules.json`**: These files exist in the `Testing_docs/` folder but **are no longer actively used by the core application workflow**. They are legacy artifacts from before the Gemini LLM integration was implemented.
 
 ### **Where Real Data and Logic are Used**
 * **Device Scanning**: The frontend uses `scan.ps1` via Electron to gather **real hardware and OS data** from the host machine.
@@ -93,10 +92,10 @@ It is crucial to understand which parts of the application use static mock data 
 
 To prevent confusion, the following backend components, endpoints, and functionalities exist exclusively for internal backend operations and are **never** called or consumed by the React frontend:
 
-1. **`load_and_ingest_seeds()`** (in `document_ingestion.py`):
-   * This function is triggered internally by `main.py` on FastAPI startup. It traverses the physical seed directory and ingests new PDFs without any frontend initiation.
-2. **`settings.SEED_DIR` & `os.listdir`**:
-   * The frontend has zero knowledge of the physical seed directory. It only interacts with the `documents` database table via the `GET /api/v1/documents/` endpoint.
+1. **Removed Features:**
+   * `load_and_ingest_seeds()` logic has been permanently removed from `main.py` in favor of a strictly manual upload testing workflow to prevent arbitrary database wipes on startup.
+2. **`settings.SEED_DIR`**:
+   * Previously used for auto-seeding, this configuration may still exist internally but is no longer automatically invoked.
 3. **`ADMIN_MAINTENANCE_PASSWORD` configuration value**:
    * The actual password value is strictly stored in `.env` and `config.py` on the backend. The frontend only provides a blank input field for the user to type into; it never hardcodes or checks the password locally.
 4. **`scripts/flush_db.py`**:

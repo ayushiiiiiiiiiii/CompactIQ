@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { uploadDocument } from '../api';
+import { uploadDocument } from '../api/endpoints';
 import { UploadCloud, FileText } from 'lucide-react';
 
 const DocumentUpload = () => {

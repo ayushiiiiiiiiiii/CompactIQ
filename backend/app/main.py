@@ -21,17 +21,13 @@ app.add_middleware(
 async def startup_event():
     # Create tables if they do not exist
     from app.db.database import engine, Base
-    from app.services.document_ingestion import load_and_ingest_seeds
+    from app.db.database import engine, Base
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
-    # Automatic loading of seed directory on startup
-    await load_and_ingest_seeds()
 
 @app.get("/")
 def root():
     return {"message": f"Welcome to the {settings.PROJECT_NAME} API"}
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
-

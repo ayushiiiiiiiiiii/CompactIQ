@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from app.schemas.schemas import ChatRequest, ChatResponse
-from app.db.database import get_db
+from app.api.dependencies import get_db
 from app.models.models import Device
 from app.core.config import settings
 from google import genai

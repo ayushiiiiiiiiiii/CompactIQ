@@ -285,7 +285,7 @@ To support enterprise scale, the data model transitions from simple SQLite table
 
 | File / Component | Current Role (MVP) | Future Role (Enterprise) | Required Changes & Migration Strategy | Tech Debt & Priority |
 | :--- | :--- | :--- | :--- | :--- |
-| `frontend/src/pages/Dashboard.js` | Manual scan trigger via button. Displays simple compliance. | Zero-Touch automated dashboard. | **HIGH PRIORITY:** Remove manual button. Implement `useEffect` auto-trigger and enterprise loading sequence. | High Debt (Manual Flow) |
+| `frontend/src/hooks/useDeviceScan.js` | Manual scan trigger via button. Displays simple compliance. | Zero-Touch automated dashboard. | **HIGH PRIORITY:** Remove manual button. Implement `useEffect` auto-trigger and enterprise loading sequence. | High Debt (Manual Flow) |
 | `frontend/public/scan.ps1` | Basic WMI/CIM polling. | Deep forensic scanner. | Add support for reading application specific config files and deeper registry inspection. | Medium Debt |
 | `backend/app/services/document_ingestion.py` | Heuristic string matching for rule extraction. | RAG/LLM Extraction Pipeline orchestrator. | **HIGH PRIORITY:** Replace heuristics with LangChain/LlamaIndex calls to an LLM for structured JSON output. | High Debt (Brittle Regex) |
 | `backend/app/services/graph_service.py` | In-memory NetworkX graph processing. | Interface layer to dedicated Graph DB (Neo4j). | Deprecate NetworkX for production. Rewrite traversal logic in Cypher query language. | Medium Debt (Scalability) |

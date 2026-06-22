@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getGlobalRules } from '../api';
+import { getGlobalRules } from '../api/endpoints';
 import { Table, ShieldAlert, ShieldCheck, Database, HelpCircle } from 'lucide-react';
 
 const RulesMatrix = () => {
@@ -35,7 +35,7 @@ const RulesMatrix = () => {
             </div>
 
             <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ padding: '24px', borderBottom: '1px solid var(--card-border)', background: 'var(--terminal-header)', display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ padding: '24px', borderBottom: '1px solid var(--card-border)', background: 'var(--bg-color)', display: 'flex', justifyContent: 'space-between' }}>
                     <h3 style={{ margin: 0, fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Table size={18} />
                         Extracted Rules Database ({rules.length} total)
