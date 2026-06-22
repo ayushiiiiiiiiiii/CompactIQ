@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
-import ComponentModal from '../components/ComponentModal';
+import ComponentModal from '../components/ui/ComponentModal';
 
 const ComponentExplorer = () => {
     const { complianceResult, graphData, setSelectedComponent, setIsModalOpen } = useContext(AppContext);

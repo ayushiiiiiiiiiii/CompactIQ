@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { AppContext } from '../context/AppContext';
+import { AppContext } from '../../context/AppContext';
 
 const ComponentModal = () => {
     const { isModalOpen, setIsModalOpen, selectedComponent, complianceResult, graphData } = useContext(AppContext);
@@ -43,7 +43,7 @@ const ComponentModal = () => {
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
             }}>
                 {/* Header */}
-                <div style={{ padding: '20px', borderBottom: `4px solid ${badgeColor}`, backgroundColor: 'var(--terminal-header)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ padding: '20px', borderBottom: `4px solid ${badgeColor}`, backgroundColor: 'var(--bg-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
                             <h2 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '24px' }}>{node.componentName || selectedComponent.id}</h2>
@@ -127,7 +127,7 @@ const ComponentModal = () => {
                 </div>
 
                 {/* Footer */}
-                <div style={{ padding: '15px 20px', backgroundColor: 'var(--terminal-header)', borderTop: '1px solid var(--card-border)', textAlign: 'right' }}>
+                <div style={{ padding: '15px 20px', backgroundColor: 'var(--bg-color)', borderTop: '1px solid var(--card-border)', textAlign: 'right' }}>
                     <button 
                         onClick={() => setIsModalOpen(false)}
                         style={{ backgroundColor: '#0076CE', color: 'white', border: 'none', padding: '8px 24px', borderRadius: '6px', fontWeight: '500', cursor: 'pointer' }}

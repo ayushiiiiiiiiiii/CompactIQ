@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import text
 from app.schemas.schemas import DocumentUploadResponse, AdminActionRequest
-from app.db.database import get_db
+from app.api.dependencies import get_db
 from app.models.models import Document, Rule
 import aiofiles
 import os

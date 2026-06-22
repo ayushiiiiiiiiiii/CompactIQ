@@ -5,7 +5,7 @@ from sqlalchemy.future import select
 from sqlalchemy import delete
 from sqlalchemy.orm import selectinload
 from app.schemas.schemas import InventoryRequest, ComplianceResponse, Violation, Remediation, ComponentInfo
-from app.db.database import get_db
+from app.api.dependencies import get_db
 from app.models.models import Rule, Device, DeviceComponent
 from app.services.graph_service import graph_engine
 from app.core.config import settings

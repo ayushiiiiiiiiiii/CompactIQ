@@ -1,7 +1,7 @@
 import React, { useContext, useState, useMemo } from 'react';
 import ReactFlow, { Background, Controls, MarkerType } from 'react-flow-renderer';
 import { AppContext } from '../context/AppContext';
-import ComponentModal from '../components/ComponentModal';
+import ComponentModal from '../components/ui/ComponentModal';
 import { Link } from 'react-router-dom';
 
 const GraphView = () => {

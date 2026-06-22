@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDocumentsList, removeDocument, flushDatabase } from '../api';
+import { getDocumentsList, removeDocument, flushDatabase } from '../api/endpoints';
 import { Database, Trash2, AlertTriangle, X } from 'lucide-react';
 
 const KnowledgeBaseAdmin = () => {

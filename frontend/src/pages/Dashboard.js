@@ -2,10 +2,10 @@ import React, { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import ReactFlow, { Background, Controls } from 'react-flow-renderer';
 import { Link } from 'react-router-dom';
-import ComponentModal from '../components/ComponentModal';
+import ComponentModal from '../components/ui/ComponentModal';
 
 const Dashboard = () => {
-    const { complianceResult, graphData, setSelectedComponent, setIsModalOpen } = useContext(AppContext);
+    const { complianceResult, graphData, setSelectedComponent, setIsModalOpen, setLoadingStatus, setPhaseIndex } = useContext(AppContext);
 
     if (!complianceResult) {
         return <div style={{ padding: '20px' }}>No scan data available.</div>;
@@ -38,8 +38,20 @@ const Dashboard = () => {
             <ComponentModal />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--card-border)', paddingBottom: '15px', marginBottom: '20px' }}>
                 <h1 style={{ margin: 0, color: 'var(--text-primary)' }}>Endpoint Overview</h1>
-                <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Last Scan: <strong style={{ color: 'var(--text-primary)' }}>{complianceResult.last_scanned ? new Date(complianceResult.last_scanned).toLocaleString() : 'Just now'}</strong></div>
+                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Last Scan: <strong style={{ color: 'var(--text-primary)' }}>{complianceResult.last_scanned ? new Date(complianceResult.last_scanned).toLocaleString() : 'Just now'}</strong></div>
+                        <button 
+                            onClick={() => {
+                                window.hasStartedScan = false;
+                                setPhaseIndex(0);
+                                setLoadingStatus(true);
+                            }}
+                            className="btn-primary" 
+                            style={{ padding: '6px 12px', fontSize: '12px' }}>
+                            Rescan System
+                        </button>
+                    </div>
                     <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Scan Status: <strong style={{ color: '#0076CE' }}>{complianceResult.scan_status || 'COMPLETED'}</strong></div>
                 </div>
             </div>
